@@ -11,7 +11,10 @@ export default function IndexBadge({ mind }: { mind: Mind }) {
     import('@/lib/indexer').then(({ getIndexStatus }) => {
       getIndexStatus(mind).then(s => setStatus(s as Status))
     })
-  }, [mind.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Bug #17 fix: also re-check when corpus content changes (not just when mind id changes)
+  // so badge updates after user edits a mind's source material
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mind.id, mind.corpus])
 
   if (status === 'unknown' || status === 'no-corpus') return null
 

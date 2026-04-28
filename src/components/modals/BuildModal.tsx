@@ -11,7 +11,7 @@ type MindType = 'personal' | 'community' | 'public'
 type BuildPhase = 'form1' | 'form2' | 'building' | 'indexing' | 'done' | 'error'
 
 export default function BuildModal() {
-  const { buildModalOpen, setBuildModalOpen, apiKey, addMind } = useAppStore()
+  const { buildModalOpen, setBuildModalOpen, apiKey, addMind, user } = useAppStore()
   const [phase, setPhase] = useState<BuildPhase>('form1')
   const [type, setType] = useState<MindType>('personal')
   const [name, setName] = useState('')
@@ -43,6 +43,8 @@ export default function BuildModal() {
         await new Promise(r => setTimeout(r, 600))
         built = buildMindLocally({ id, name, era, type, description, sourceText })
       }
+      // Bug #20 fix: stamp ownerEmail so sidebar can guard user minds from public section
+      if (user?.email) built = { ...built, ownerEmail: user.email }
 
       setResult(built as ReturnType<typeof buildMindLocally>)
 

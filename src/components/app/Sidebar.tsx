@@ -28,8 +28,11 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const { appView, setAppView, user, logout, minds, currentMindId, selectMind, setBuildModalOpen } = useAppStore()
 
-  const publicMinds = minds.filter(m => m.type === 'public')
-  const builtMinds = minds.filter(m => m.type !== 'public')
+  // Bug #20 fix: ownership guard — a mind belongs in the "Public" section only if
+  // it is type 'public' AND has no ownerEmail (platform mind, not user-built).
+  // User-built minds (even if type='public') show under "My minds" via ownerEmail.
+  const publicMinds = minds.filter(m => m.type === 'public' && !m.ownerEmail)
+  const builtMinds = minds.filter(m => m.type !== 'public' || m.ownerEmail)
 
   return (
     <aside className="sidebar">

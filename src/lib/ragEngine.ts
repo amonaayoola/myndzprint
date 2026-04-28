@@ -60,22 +60,21 @@ async function tier1Generation(
     'If you cannot answer from the available material, say so honestly in character.',
   ].filter(Boolean).join('\n')
 
+  // Bug #8 fix: truncate history to last 20 messages before sending to Claude
+  const recentHistory = history.slice(-20)
   const messages = [
-    ...history
+    ...recentHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role, content: m.content })),
     { role: 'user' as const, content: userMessage },
   ]
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  // Bug #4 fix: proxy via server-side API route — API key never exposed to browser
+  const res = await fetch('/api/claude', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      apiKey,
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 500,
       system: systemPrompt,
@@ -159,9 +158,8 @@ export async function ragReply(
   let hasIndex = false
   try { hasIndex = await hasChunks(mind.id) } catch { /* IDB unavailable */ }
 
-  const embedOpts: EmbedOptions = {
-    openAiKey: process.env.NEXT_PUBLIC_OPENAI_KEY || undefined,
-  }
+  // Bug #3 fix: NEXT_PUBLIC_ removed — embedder now proxies through /api/embeddings server-side
+  const embedOpts: EmbedOptions = {}
 
   // Tier 1: API + RAG
   if (apiKey && apiKey.trim().length > 10) {

@@ -143,14 +143,19 @@ function getRedirect(mind: Mind, _message: string, ctx: ReplyContext): BrainRepl
   const fallback = (mind.brain || []).find(e => e.keys.length === 1 && e.keys[0] === '__redirect__')
   if (!fallback) return null
   const recentEntity = ctx.entitiesMentioned[0]
-  const used = ctx.repliesUsed['__redirect__'] || []
+  let used = ctx.repliesUsed['__redirect__'] || []
+
+  // Bug #11 fix: reset the used list BEFORE picking the next index so that after
+  // exhausting all variants we correctly start from 0 with a fresh used array,
+  // rather than appending pickIdx=0 onto the stale fully-used array.
+  if (used.length >= fallback.replies.length) {
+    used = []
+    ctx.repliesUsed['__redirect__'] = []
+  }
+
   let pickIdx = 0
   for (let i = 0; i < fallback.replies.length; i++) {
     if (!used.includes(i)) { pickIdx = i; break }
-  }
-  if (used.length >= fallback.replies.length) {
-    ctx.repliesUsed['__redirect__'] = []
-    pickIdx = 0
   }
   ctx.repliesUsed['__redirect__'] = [...used, pickIdx]
   const reply = fallback.replies[pickIdx]

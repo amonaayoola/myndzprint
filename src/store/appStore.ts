@@ -73,7 +73,8 @@ export const useAppStore = create<Store>()(
       currentMindId: null,
       conversations: initialConversations,
       activeTag: 'All',
-      apiKey: process.env.NEXT_PUBLIC_ANTHROPIC_KEY || '',
+      // Bug #3 fix: removed NEXT_PUBLIC_ prefix — apiKey is user-supplied, not an env var here
+      apiKey: '',
       minds: MINDS_WITH_CORPUS,
       buildState: defaultBuildState,
       earlyAccessOpen: false,
@@ -99,6 +100,7 @@ export const useAppStore = create<Store>()(
       logout: () => {
         const convReset: Record<string, Message[]> = {}
         for (const m of MINDS_WITH_CORPUS) convReset[m.id] = []
+        // Bug #7 fix: clear apiKey from store and localStorage on logout
         set({
           user: null,
           page: 'landing',
@@ -106,7 +108,17 @@ export const useAppStore = create<Store>()(
           currentMindId: null,
           conversations: convReset,
           minds: MINDS_WITH_CORPUS,
+          apiKey: '',
         })
+        // Also purge from localStorage to prevent key leakage
+        try {
+          const raw = localStorage.getItem('myndzprint-store')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed?.state) delete parsed.state.apiKey
+            localStorage.setItem('myndzprint-store', JSON.stringify(parsed))
+          }
+        } catch { /* ignore storage errors */ }
       },
 
       // Minds
@@ -175,37 +187,39 @@ export const useAppStore = create<Store>()(
     }),
     {
       name: 'myndzprint-store',
-      // Bug 5: strip corpus from persisted minds (~40KB each) — re-attached on rehydration
+      // Bug #2 fix: strip apiKey from partialize so it's never persisted to localStorage.
+      // Also strips corpus from persisted minds (~40KB each) — re-attached on rehydration.
       partialize: (s) => ({
         user: s.user,
-        apiKey: s.apiKey,
+        // apiKey intentionally omitted — never persisted
         conversations: s.conversations,
         currentMindId: s.currentMindId,
         minds: s.minds.map(m => ({ ...m, corpus: '' })),
       }),
-      // Bug 6: re-merge corpus from static source after every rehydration so
-      // public minds always have fresh data and user-built minds keep theirs
-      onRehydrateStorage: () => (state) => {
-        if (!state) return
-
-        // Restore page state based on persisted user — page itself isn't persisted
-        // so refresh always defaults to 'landing'. Fix: go to app if user exists.
-        if (state.user) {
-          state.page = 'app'
-          if (!state.appView) state.appView = 'home'
-        }
+      // Bug #13 fix: use the set function instead of direct mutation on the state object.
+      // Direct mutation works in some Zustand versions but is unreliable and not the
+      // documented API — use the set callback form instead.
+      onRehydrateStorage: () => (state, set) => {
+        if (!state || !set) return
 
         const publicIds = new Set(MINDS_WITH_CORPUS.map(m => m.id))
         const userMinds = (state.minds || [])
           .filter((m: Mind) => !publicIds.has(m.id))
           .map((m: Mind) => ({ ...m, corpus: CORPUS[m.id] || m.corpus || '' }))
-        state.minds = [...MINDS_WITH_CORPUS, ...userMinds]
+        const mergedMinds = [...MINDS_WITH_CORPUS, ...userMinds]
 
-        const convs = state.conversations || {}
-        for (const m of state.minds) {
+        const convs = { ...(state.conversations || {}) }
+        for (const m of mergedMinds) {
           if (!convs[m.id]) convs[m.id] = []
         }
-        state.conversations = convs
+
+        // Restore page state based on persisted user — page itself isn't persisted
+        // so refresh always defaults to 'landing'. Fix: go to app if user exists.
+        set({
+          minds: mergedMinds,
+          conversations: convs,
+          ...(state.user ? { page: 'app' as const, appView: state.appView || 'home' as const } : {}),
+        })
       },
     }
   )

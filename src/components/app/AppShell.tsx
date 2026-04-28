@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Sidebar from './Sidebar'
 import ChatView from './ChatView'
 import LibraryView from './LibraryView'
@@ -10,16 +10,21 @@ import { useAppStore } from '@/store/appStore'
 export default function AppShell() {
   const appView = useAppStore(s => s.appView)
   const minds = useAppStore(s => s.minds)
+  // Bug #12 fix: use a ref to hold the latest minds value so the startup effect
+  // doesn't capture a stale closure — the ref is always current.
+  const mindsRef = useRef(minds)
+  useEffect(() => { mindsRef.current = minds }, [minds])
 
   useEffect(() => {
     // Preload offline embedding model in background (23MB, cached after first load)
     import('@/lib/embedder').then(({ preloadOfflineModel }) => preloadOfflineModel())
 
-    // Index public minds that haven't been indexed yet
+    // Bug #12 fix: read from ref so we get the up-to-date minds list at call time,
+    // not the stale snapshot captured when the effect was first registered.
     import('@/lib/indexer').then(({ indexPublicMindsIfNeeded }) => {
-      indexPublicMindsIfNeeded(minds).catch(console.warn)
+      indexPublicMindsIfNeeded(mindsRef.current).catch(console.warn)
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // intentionally runs once on mount
 
   return (
     <div className="page app active" id="page-app">

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { showToast } from '@/components/ui/Toast'
 
@@ -15,32 +15,45 @@ export default function SettingsView() {
   const [editing, setEditing] = useState(false)
   const [keyInput, setKeyInput] = useState(apiKey)
   const [indexInfo, setIndexInfo] = useState<MindIndexInfo[]>([])
+  const [indexError, setIndexError] = useState<string | null>(null)
   const [reindexing, setReindexing] = useState<string | null>(null)
+  // Bug #18 fix: debounce timer ref to prevent excessive IDB reads when minds changes rapidly
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    loadIndexInfo()
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => { void loadIndexInfo() }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [minds]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Bug #6 fix: wrap all IndexedDB calls in try/catch with user-visible error state
   async function loadIndexInfo() {
-    const { getIndexStatus } = await import('@/lib/indexer')
-    const { getChunksForMind } = await import('@/lib/vectorStore')
-    const info: MindIndexInfo[] = []
-    for (const m of minds) {
-      const status = await getIndexStatus(m)
-      let chunkCount: number | undefined
-      if (status === 'indexed') {
-        const chunks = await getChunksForMind(m.id)
-        chunkCount = chunks.length
+    setIndexError(null)
+    try {
+      const { getIndexStatus } = await import('@/lib/indexer')
+      const { getChunksForMind } = await import('@/lib/vectorStore')
+      const info: MindIndexInfo[] = []
+      for (const m of minds) {
+        const status = await getIndexStatus(m)
+        let chunkCount: number | undefined
+        if (status === 'indexed') {
+          const chunks = await getChunksForMind(m.id)
+          chunkCount = chunks.length
+        }
+        info.push({ id: m.id, name: m.name, status, chunkCount })
       }
-      info.push({ id: m.id, name: m.name, status, chunkCount })
+      setIndexInfo(info)
+    } catch (e) {
+      console.error('loadIndexInfo failed:', e)
+      setIndexError('Could not read index status. IndexedDB may be unavailable.')
     }
-    setIndexInfo(info)
   }
 
   async function reindex(mindId: string) {
     const mind = minds.find(m => m.id === mindId)
     if (!mind) return
     setReindexing(mindId)
+    // Bug #6 fix: try/catch with user-visible error
     try {
       const { reIndexMind } = await import('@/lib/indexer')
       const count = await reIndexMind(mind, {})
@@ -57,10 +70,16 @@ export default function SettingsView() {
   async function clearIndex(mindId: string) {
     const mind = minds.find(m => m.id === mindId)
     if (!mind) return
-    const { deleteChunksForMind } = await import('@/lib/vectorStore')
-    await deleteChunksForMind(mindId)
-    showToast(`Cleared index for ${mind.name}.`)
-    await loadIndexInfo()
+    // Bug #6 fix: try/catch with user-visible error
+    try {
+      const { deleteChunksForMind } = await import('@/lib/vectorStore')
+      await deleteChunksForMind(mindId)
+      showToast(`Cleared index for ${mind.name}.`)
+      await loadIndexInfo()
+    } catch (e) {
+      showToast('Failed to clear index. Check console.')
+      console.error(e)
+    }
   }
 
   function saveKey() {
@@ -117,7 +136,7 @@ export default function SettingsView() {
               <input
                 className="form-input"
                 style={{ flex: 1, fontSize: 13 }}
-                type="text"
+                type="password"
                 placeholder="sk-ant-..."
                 value={keyInput}
                 onChange={e => setKeyInput(e.target.value)}
@@ -142,6 +161,11 @@ export default function SettingsView() {
               </div>
             </div>
           </div>
+          {indexError && (
+            <div style={{ background: 'var(--error-bg)', color: 'var(--error)', fontSize: 12, padding: '8px 12px', borderRadius: 8, marginTop: 8 }}>
+              {indexError}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8 }}>
             {indexInfo.map(info => (
               <div key={info.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--border)' }}>

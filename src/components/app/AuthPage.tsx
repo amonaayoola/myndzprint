@@ -3,6 +3,25 @@ import { useState } from 'react'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
 
+// Bug #1 fix: hash passwords with SHA-256 via Web Crypto API before storing/comparing
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Bug #15 fix: safe localStorage parse helper
+function safeParseUsers(): { email: string; password: string; name: string }[] {
+  try {
+    const stored = localStorage.getItem('mp_demo_users')
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
 export default function AuthPage() {
   const { authMode, setAuthMode, setPage, login } = useAppStore()
   const isLogin = authMode === 'login'
@@ -11,7 +30,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  function submit() {
+  // Bug #1 fix: submit is now async to await the SHA-256 hash
+  async function submit() {
     setError('')
     if (!isLogin && !name.trim()) { setError('Please enter your name.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -20,21 +40,29 @@ export default function AuthPage() {
     if (!password.trim() || password.length < 4) {
       setError('Please enter a password (min 4 characters).'); return
     }
+
+    // Bug #1 fix: hash the password before comparing or storing
+    const hashedPassword = await hashPassword(password)
+
     // Demo auth — store locally
     if (isLogin) {
-      const stored = localStorage.getItem('mp_demo_users')
-      const users = stored ? JSON.parse(stored) : []
-      const found = users.find((u: { email: string; password: string; name: string }) =>
-        u.email === email.trim() && u.password === password
-      )
+      // Bug #15 fix: JSON.parse wrapped in try/catch via safeParseUsers
+      const users = safeParseUsers()
+      const found = users.find(u => u.email === email.trim() && u.password === hashedPassword)
       if (!found) { setError('No account found with those details.'); return }
       login(found.name, email.trim())
     } else {
-      const users = JSON.parse(localStorage.getItem('mp_demo_users') || '[]')
-      const exists = users.find((u: { email: string }) => u.email === email.trim())
+      // Bug #15 fix: JSON.parse wrapped in try/catch via safeParseUsers
+      const users = safeParseUsers()
+      const exists = users.find(u => u.email === email.trim())
       if (exists) { setError('An account with that email already exists. Sign in instead.'); return }
-      users.push({ name: name.trim(), email: email.trim(), password })
-      localStorage.setItem('mp_demo_users', JSON.stringify(users))
+      // Bug #1 fix: store hashed password, never plaintext
+      users.push({ name: name.trim(), email: email.trim(), password: hashedPassword })
+      try {
+        localStorage.setItem('mp_demo_users', JSON.stringify(users))
+      } catch {
+        setError('Could not save account. Storage may be unavailable.'); return
+      }
       login(name.trim(), email.trim())
     }
   }
@@ -63,21 +91,21 @@ export default function AuthPage() {
           {!isLogin && (
             <div className="form-group">
               <label className="form-label">Name</label>
-              <input className="form-input" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
+              <input className="form-input" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void submit() }} />
             </div>
           )}
 
           <div className="form-group">
             <label className="form-label">Email</label>
-            <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
+            <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void submit() }} />
           </div>
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
+            <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void submit() }} />
           </div>
 
-          <button className="auth-submit" onClick={submit}>{isLogin ? 'Sign in' : 'Create account'}</button>
+          <button className="auth-submit" onClick={() => void submit()}>{isLogin ? 'Sign in' : 'Create account'}</button>
 
           <div className="auth-switch">
             <span>{isLogin ? "Don't have an account? " : 'Already have an account? '}</span>

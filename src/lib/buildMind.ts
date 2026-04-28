@@ -31,6 +31,10 @@ export function buildMindLocally(params: {
     .map(s => s.trim())
     .filter(s => s.length > 20 && s.length < 240)
 
+  // Bug #19 fix: capture the first sentence BEFORE takeSentence() shifts it away.
+  // The opening field must use this captured value, not sentences[0] after mutations.
+  const firstSentCapture = sentences[0] || description.split(/[.!?]/)[0] || ''
+
   const takeSentence = () => (sentences.length ? sentences.shift() : null)
 
   const brain: Mind['brain'] = []
@@ -89,7 +93,9 @@ export function buildMindLocally(params: {
     ],
   })
 
-  const firstSent = sentences[0] || description.split(/[.!?]/)[0] || ''
+  // Bug #19 fix: use the pre-captured first sentence rather than sentences[0] which
+  // may be wrong index after takeSentence() has shifted elements off the array.
+  const firstSent = firstSentCapture
   const opening = firstSent
     ? `I am ${name}. ${firstSent.slice(0, 180)}. What brings you here?`
     : `I am ${name}. ${description.slice(0, 140) || 'Ask me anything.'} What brings you here?`

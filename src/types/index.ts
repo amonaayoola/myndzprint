@@ -23,6 +23,9 @@ export interface Mind {
   system?: string
   brain: BrainEntry[]
   corpus?: string
+  /** Bug #20: ownerEmail tracks which user built this mind — used to separate
+   *  user-built minds from the platform's public minds in the sidebar. */
+  ownerEmail?: string
 }
 
 export interface Message {

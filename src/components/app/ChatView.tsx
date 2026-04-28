@@ -48,11 +48,14 @@ export default function ChatView() {
 
     const history = getMessages(currentMindId)
     const userMsg: Message = { role: 'user', content: text.trim(), timestamp: Date.now() }
+    // Bug #21 fix: include the current user message in history passed to ragReply/localReply
+    // so the reply engine can see the full conversation including the message being replied to.
+    const historyWithCurrent = [...history, userMsg]
     addMessage(currentMindId, userMsg)
     setTyping(true)
 
     try {
-      const result = await ragReply(mind, text.trim(), history, apiKey || undefined)
+      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined)
       setTyping(false)
       addMessage(currentMindId, {
         role: 'assistant',
