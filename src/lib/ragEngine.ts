@@ -18,7 +18,7 @@ import { getChunksForMind, topK, hasChunks } from './vectorStore'
 import { localReply, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
-// ── Voice-wrapping prefixes for offline mode ─────────────────────────────────
+// -- Voice-wrapping prefixes for offline mode ---------------------------------
 const OFFLINE_PREFIXES = [
   '',
   'On this: ',
@@ -33,7 +33,22 @@ function wrapOfflineReply(text: string): string {
   return prefix + text
 }
 
-// ── Tier 1: API generation with RAG context ──────────────────────────────────
+// -- Deduplication: filter chunks with >60% word overlap with already-selected --
+function deduplicateChunks<T extends { text: string }>(chunks: T[]): T[] {
+  const selected: T[] = []
+  for (const chunk of chunks) {
+    const words = new Set(chunk.text.toLowerCase().split(/\s+/))
+    const isDuplicate = selected.some(s => {
+      const sWords = new Set(s.text.toLowerCase().split(/\s+/))
+      const intersection = [...words].filter(w => sWords.has(w)).length
+      return intersection / words.size > 0.6
+    })
+    if (!isDuplicate) selected.push(chunk)
+  }
+  return selected
+}
+
+// -- Tier 1: API generation with RAG context ----------------------------------
 async function tier1Generation(
   mind: Mind,
   userMessage: string,
@@ -44,7 +59,7 @@ async function tier1Generation(
   // Retrieve relevant chunks
   const queryVec = await embedQuery(userMessage, embedOpts)
   const chunks = await getChunksForMind(mind.id)
-  const relevant = topK(queryVec, chunks, 5)
+  const relevant = deduplicateChunks(topK(queryVec, chunks, 5))
 
   const context = relevant.map(c => c.text).join('\n\n')
 
@@ -60,8 +75,8 @@ async function tier1Generation(
     'If you cannot answer from the available material, say so honestly in character.',
   ].filter(Boolean).join('\n')
 
-  // Bug #8 fix: truncate history to last 20 messages before sending to Claude
-  const recentHistory = history.slice(-20)
+  // Fix: bump history to last 40 messages for longer conversation context
+  const recentHistory = history.slice(-40)
   const messages = [
     ...recentHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -96,7 +111,7 @@ async function tier1Generation(
   return { reply, source, engine: 'llm' }
 }
 
-// ── Tier 2: Offline RAG — retrieval + best reply selection ───────────────────
+// -- Tier 2: Offline RAG — retrieval + best reply selection -------------------
 async function tier2Offline(
   mind: Mind,
   userMessage: string,
@@ -105,7 +120,7 @@ async function tier2Offline(
 ): Promise<ReplyResult> {
   const queryVec = await embedQuery(userMessage, embedOpts)
   const chunks = await getChunksForMind(mind.id)
-  const relevant = topK(queryVec, chunks, 3)
+  const relevant = deduplicateChunks(topK(queryVec, chunks, 3))
 
   if (relevant.length === 0) {
     // No relevant chunks — fall through to Tier 3
@@ -117,71 +132,54 @@ async function tier2Offline(
   if (topChunk.id.includes('-brain-')) {
     const brainPart = topChunk.id.split('-brain-')[1]
     const parts = brainPart ? brainPart.split('-') : []
-    const eIdx = parseInt(parts[0])
-    const rIdx = parseInt(parts[1])
-    if (!isNaN(eIdx) && !isNaN(rIdx)) {
-      const entry = mind.brain?.[eIdx]
-      const reply = entry?.replies?.[rIdx]
-      if (reply) {
-        return { reply: reply.t, source: reply.s, engine: 'local' }
+    const topicIdx = parts[0] ? parseInt(parts[0]) : 0
+    const replyIdx = parts[1] ? parseInt(parts[1]) : 0
+    const brainEntries = mind.brain || []
+    const entry = brainEntries[topicIdx]
+    if (entry?.replies?.[replyIdx]) {
+      return {
+        reply: wrapOfflineReply(entry.replies[replyIdx].t),
+        source: entry.replies[replyIdx].s || mind.name,
+        engine: 'offline-brain',
       }
     }
   }
 
-  // Top chunk is a corpus passage — use it directly, wrapped in voice
-  const best = relevant
-    .map(c => c.text)
-    .join(' ')
-    .slice(0, 400)
-
+  // Use top corpus chunk, wrapped in voice framing
+  const bestText = topChunk.text.trim()
   return {
-    reply: wrapOfflineReply(best),
+    reply: wrapOfflineReply(bestText),
     source: mind.name,
-    engine: 'local',
+    engine: 'offline-rag',
   }
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
-export type ReplyTier = 'api-rag' | 'offline-rag' | 'offline-fallback'
-
-export interface RagReplyResult extends ReplyResult {
-  tier: ReplyTier
-}
-
+// -- Public entry point -------------------------------------------------------
 export async function ragReply(
   mind: Mind,
   userMessage: string,
   history: Message[],
-  apiKey?: string
-): Promise<RagReplyResult> {
-  // hasChunks can fail in private browsing where IndexedDB is blocked
-  let hasIndex = false
-  try { hasIndex = await hasChunks(mind.id) } catch { /* IDB unavailable */ }
+  apiKey: string | null,
+  embedOpts: EmbedOptions
+): Promise<ReplyResult> {
+  const indexed = await hasChunks(mind.id)
 
-  // Bug #3 fix: NEXT_PUBLIC_ removed — embedder now proxies through /api/embeddings server-side
-  const embedOpts: EmbedOptions = {}
-
-  // Tier 1: API + RAG
-  if (apiKey && apiKey.trim().length > 10) {
+  if (apiKey && indexed) {
     try {
-      const result = await tier1Generation(mind, userMessage, history, apiKey, embedOpts)
-      return { ...result, tier: 'api-rag' }
+      return await tier1Generation(mind, userMessage, history, apiKey, embedOpts)
     } catch (err) {
-      console.warn('Tier 1 failed, falling back:', err)
+      console.warn('Tier 1 failed, falling back to Tier 2:', err)
     }
   }
 
-  // Tier 2: Offline RAG (needs an indexed mind)
-  if (hasIndex) {
+  if (indexed) {
     try {
-      const result = await tier2Offline(mind, userMessage, history, embedOpts)
-      return { ...result, tier: 'offline-rag' }
+      return await tier2Offline(mind, userMessage, history, embedOpts)
     } catch (err) {
-      console.warn('Tier 2 failed, falling back:', err)
+      console.warn('Tier 2 failed, falling back to Tier 3:', err)
     }
   }
 
-  // Tier 3: Original keyword engine — always works
-  const result = localReply(mind, userMessage, history)
-  return { ...result, tier: 'offline-fallback' }
+  // Tier 3 fallback
+  return localReply(mind, userMessage, history)
 }
