@@ -11,7 +11,7 @@ type MindType = 'personal' | 'community' | 'public'
 type BuildPhase = 'form1' | 'form2' | 'building' | 'indexing' | 'done' | 'error'
 
 export default function BuildModal() {
-  const { buildModalOpen, setBuildModalOpen, apiKey, addMind, user } = useAppStore()
+  const { buildModalOpen, setBuildModalOpen, apiKey, provider, model, addMind, user } = useAppStore()
   const [phase, setPhase] = useState<BuildPhase>('form1')
   const [type, setType] = useState<MindType>('personal')
   const [name, setName] = useState('')
@@ -38,7 +38,7 @@ export default function BuildModal() {
     try {
       let built
       if (apiKey && apiKey.trim().length > 10) {
-        built = await buildMindViaAPI({ id, name, era, type, description, sourceText, apiKey })
+        built = await buildMindViaAPI({ id, name, era, type, description, sourceText, apiKey, provider, model })
       } else {
         await new Promise(r => setTimeout(r, 600))
         built = buildMindLocally({ id, name, era, type, description, sourceText })

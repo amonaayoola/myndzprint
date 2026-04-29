@@ -54,7 +54,9 @@ async function tier1Generation(
   userMessage: string,
   history: Message[],
   apiKey: string,
-  embedOpts: EmbedOptions
+  embedOpts: EmbedOptions,
+  provider: string = 'anthropic',
+  model: string = ''
 ): Promise<ReplyResult> {
   // Retrieve relevant chunks
   const queryVec = await embedQuery(userMessage, embedOpts)
@@ -84,13 +86,14 @@ async function tier1Generation(
     { role: 'user' as const, content: userMessage },
   ]
 
-  // Bug #4 fix: proxy via server-side API route — API key never exposed to browser
-  const res = await fetch('/api/claude', {
+  // Proxy via server-side API route — API key never exposed to browser
+  const res = await fetch('/api/llm', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      provider: provider || 'anthropic',
       apiKey,
-      model: 'claude-haiku-4-5-20251001',
+      model: model || (provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : model),
       max_tokens: 500,
       system: systemPrompt,
       messages,
@@ -160,13 +163,15 @@ export async function ragReply(
   userMessage: string,
   history: Message[],
   apiKey: string | null,
-  embedOpts: EmbedOptions
+  embedOpts: EmbedOptions,
+  provider: string = 'anthropic',
+  model: string = ''
 ): Promise<ReplyResult> {
   const indexed = await hasChunks(mind.id)
 
   if (apiKey && indexed) {
     try {
-      return await tier1Generation(mind, userMessage, history, apiKey, embedOpts)
+      return await tier1Generation(mind, userMessage, history, apiKey, embedOpts, provider, model)
     } catch (err) {
       console.warn('Tier 1 failed, falling back to Tier 2:', err)
     }

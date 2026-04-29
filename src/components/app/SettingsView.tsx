@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { showToast } from '@/components/ui/Toast'
 
+type Provider = 'anthropic' | 'openai' | 'openrouter'
+
 interface MindIndexInfo {
   id: string
   name: string
@@ -10,8 +12,37 @@ interface MindIndexInfo {
   chunkCount?: number
 }
 
+const ANTHROPIC_MODELS = [
+  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (fast)' },
+  { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6 (most capable)' },
+]
+
+const OPENAI_MODELS = [
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini (fast)' },
+  { value: 'gpt-4o', label: 'GPT-4o' },
+]
+
+const PROVIDER_LABELS: Record<Provider, string> = {
+  anthropic: 'Anthropic (Claude)',
+  openai: 'OpenAI (ChatGPT)',
+  openrouter: 'OpenRouter',
+}
+
+const API_KEY_PLACEHOLDERS: Record<Provider, string> = {
+  anthropic: 'sk-ant-...',
+  openai: 'sk-...',
+  openrouter: 'sk-or-...',
+}
+
+const API_KEY_HINTS: Record<Provider, { label: string; url: string }> = {
+  anthropic: { label: 'console.anthropic.com', url: 'https://console.anthropic.com' },
+  openai: { label: 'platform.openai.com', url: 'https://platform.openai.com/api-keys' },
+  openrouter: { label: 'openrouter.ai/keys', url: 'https://openrouter.ai/keys' },
+}
+
 export default function SettingsView() {
-  const { user, apiKey, setApiKey, minds } = useAppStore()
+  const { user, apiKey, setApiKey, provider, model, setProvider, setModel, minds } = useAppStore()
   const [editing, setEditing] = useState(false)
   const [keyInput, setKeyInput] = useState(apiKey)
   const [indexInfo, setIndexInfo] = useState<MindIndexInfo[]>([])
@@ -88,10 +119,22 @@ export default function SettingsView() {
     showToast('API key saved.')
   }
 
+  function handleProviderChange(p: Provider) {
+    setProvider(p)
+    // Reset model to default for the new provider
+    if (p === 'anthropic') setModel(ANTHROPIC_MODELS[0].value)
+    else if (p === 'openai') setModel(OPENAI_MODELS[0].value)
+    else setModel('') // OpenRouter: let user type their own
+    setEditing(false)
+    setKeyInput('')
+  }
+
   const statusColor = (s: string) =>
     s === 'indexed' ? 'var(--green)' : s === 'not-indexed' ? 'var(--gold)' : 'var(--text3)'
   const statusLabel = (s: string) =>
     s === 'indexed' ? '◉ indexed' : s === 'not-indexed' ? '○ not indexed' : '— no corpus'
+
+  const hint = API_KEY_HINTS[provider]
 
   return (
     <div className="content-view active" id="view-settings">
@@ -111,14 +154,90 @@ export default function SettingsView() {
           </div>
         </div>
 
+        {/* Provider & Model */}
+        <div className="settings-section">
+          <div className="settings-label">AI Provider</div>
+          <div className="settings-row">
+            <div style={{ flex: 1 }}>
+              <div className="t">Provider</div>
+              <div className="s" style={{ fontSize: 12 }}>
+                Choose which AI service powers your minds.
+              </div>
+            </div>
+          </div>
+          <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Provider dropdown */}
+            <select
+              className="form-input"
+              style={{ fontSize: 13 }}
+              value={provider}
+              onChange={e => handleProviderChange(e.target.value as Provider)}
+            >
+              {(Object.keys(PROVIDER_LABELS) as Provider[]).map(p => (
+                <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
+              ))}
+            </select>
+
+            {/* Model selector — dropdown for Anthropic/OpenAI, text input for OpenRouter */}
+            {provider === 'anthropic' && (
+              <div>
+                <div className="s" style={{ fontSize: 12, marginBottom: 6 }}>Model</div>
+                <select
+                  className="form-input"
+                  style={{ fontSize: 13 }}
+                  value={model || ANTHROPIC_MODELS[0].value}
+                  onChange={e => setModel(e.target.value)}
+                >
+                  {ANTHROPIC_MODELS.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {provider === 'openai' && (
+              <div>
+                <div className="s" style={{ fontSize: 12, marginBottom: 6 }}>Model</div>
+                <select
+                  className="form-input"
+                  style={{ fontSize: 13 }}
+                  value={model || OPENAI_MODELS[0].value}
+                  onChange={e => setModel(e.target.value)}
+                >
+                  {OPENAI_MODELS.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {provider === 'openrouter' && (
+              <div>
+                <div className="s" style={{ fontSize: 12, marginBottom: 6 }}>
+                  Model string — e.g. <code style={{ fontSize: 11, opacity: 0.8 }}>google/gemma-3-27b-it</code> or <code style={{ fontSize: 11, opacity: 0.8 }}>meta-llama/llama-3.1-8b-instruct</code>
+                </div>
+                <input
+                  className="form-input"
+                  style={{ fontSize: 13 }}
+                  type="text"
+                  placeholder="google/gemma-3-27b-it"
+                  value={model}
+                  onChange={e => setModel(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* API Key */}
         <div className="settings-section">
           <div className="settings-label">API</div>
           <div className="settings-row">
             <div style={{ flex: 1 }}>
-              <div className="t">Anthropic API key</div>
+              <div className="t">{PROVIDER_LABELS[provider]} API key</div>
               <div className="s" style={{ fontSize: 12 }}>
-                Powers Claude generation and grounded replies. Get one at console.anthropic.com.
+                Powers AI generation and grounded replies. Get one at{' '}
+                <span style={{ textDecoration: 'underline', opacity: 0.7 }}>{hint.label}</span>.
               </div>
             </div>
           </div>
@@ -137,7 +256,7 @@ export default function SettingsView() {
                 className="form-input"
                 style={{ flex: 1, fontSize: 13 }}
                 type="password"
-                placeholder="sk-ant-..."
+                placeholder={API_KEY_PLACEHOLDERS[provider]}
                 value={keyInput}
                 onChange={e => setKeyInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') saveKey() }}

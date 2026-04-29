@@ -1,6 +1,6 @@
 /**
  * claudeApi.ts
- * Handles Claude API calls for:
+ * Handles LLM API calls for:
  *   - Building a mind persona from user-supplied material (buildMindViaAPI)
  *
  * For chat replies, use ragEngine.ts (ragReply) which handles
@@ -16,8 +16,10 @@ export async function buildMindViaAPI(params: {
   description: string
   sourceText: string
   apiKey: string
+  provider?: 'anthropic' | 'openai' | 'openrouter'
+  model?: string
 }) {
-  const { id, name, era, type, description, sourceText, apiKey } = params
+  const { id, name, era, type, description, sourceText, apiKey, provider = 'anthropic', model = '' } = params
 
   const prompt = `You are building a conversational AI mind persona for a platform called Myndzprint.
 Given the following information about a person, produce a JSON object with exactly these fields:
@@ -36,13 +38,14 @@ ${sourceText ? 'Source material:\n' + sourceText.slice(0, 3000) : ''}
 
 Respond ONLY with valid JSON. No markdown, no explanation, no code fences.`
 
-  // Bug #4 fix: proxy via server-side API route — API key never exposed to browser
-  const res = await fetch('/api/claude', {
+  // Proxy via server-side API route — API key never exposed to browser
+  const res = await fetch('/api/llm', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      provider,
       apiKey,
-      model: 'claude-haiku-4-5-20251001',
+      model: model || (provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : model),
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     }),

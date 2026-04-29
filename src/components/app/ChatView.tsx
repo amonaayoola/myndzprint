@@ -24,7 +24,7 @@ function TypingDots() {
 }
 
 export default function ChatView() {
-  const { currentMindId, minds, getMessages, addMessage, apiKey } = useAppStore()
+  const { currentMindId, minds, getMessages, addMessage, apiKey, provider, model } = useAppStore()
   const mind = minds.find(m => m.id === currentMindId)
   const messages = currentMindId ? getMessages(currentMindId) : []
   const [input, setInput] = useState('')
@@ -55,7 +55,7 @@ export default function ChatView() {
     setTyping(true)
 
     try {
-      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined)
+      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined, {}, provider, model)
       setTyping(false)
       addMessage(currentMindId, {
         role: 'assistant',

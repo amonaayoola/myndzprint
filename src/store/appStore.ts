@@ -13,6 +13,8 @@ const MINDS_WITH_CORPUS: Mind[] = PUBLIC_MINDS.map(m => ({
 
 interface Store extends AppState {
   minds: Mind[]
+  provider: 'anthropic' | 'openai' | 'openrouter'
+  model: string
 
   // Navigation
   setPage: (page: AppState['page']) => void
@@ -38,6 +40,8 @@ interface Store extends AppState {
 
   // Settings
   setApiKey: (key: string) => void
+  setProvider: (provider: 'anthropic' | 'openai' | 'openrouter') => void
+  setModel: (model: string) => void
 
   // Build
   buildState: BuildState
@@ -75,6 +79,8 @@ export const useAppStore = create<Store>()(
       activeTag: 'All',
       // Bug #3 fix: removed NEXT_PUBLIC_ prefix — apiKey is user-supplied, not an env var here
       apiKey: '',
+      provider: 'anthropic',
+      model: '',
       minds: MINDS_WITH_CORPUS,
       buildState: defaultBuildState,
       earlyAccessOpen: false,
@@ -176,6 +182,8 @@ export const useAppStore = create<Store>()(
 
       // Settings
       setApiKey: (key) => set({ apiKey: key }),
+      setProvider: (provider) => set({ provider }),
+      setModel: (model) => set({ model }),
 
       // Build
       setBuildState: (updates) => set(s => ({ buildState: { ...s.buildState, ...updates } })),
@@ -192,6 +200,8 @@ export const useAppStore = create<Store>()(
       partialize: (s) => ({
         user: s.user,
         // apiKey intentionally omitted — never persisted
+        provider: s.provider,
+        model: s.model,
         conversations: s.conversations,
         currentMindId: s.currentMindId,
         minds: s.minds.map(m => ({ ...m, corpus: '' })),

@@ -16,6 +16,20 @@ export interface IndexProgress {
 
 type ProgressCallback = (p: IndexProgress) => void
 
+/** Embed a batch of texts with a timeout. Rejects if it takes longer than `ms`. */
+function embedWithTimeout(
+  batch: string[],
+  embedOpts: EmbedOptions,
+  ms: number
+): Promise<number[][]> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Embed batch timed out after ${ms}ms`)), ms)
+    embedTexts(batch, embedOpts)
+      .then(vecs => { clearTimeout(timer); resolve(vecs) })
+      .catch(err => { clearTimeout(timer); reject(err) })
+  })
+}
+
 export async function indexMind(
   mind: Mind,
   embedOpts: EmbedOptions = {},
@@ -36,13 +50,51 @@ export async function indexMind(
 
   onProgress?.({ stage: 'embedding', progress: 0.1, chunkCount: allTexts.length })
 
-  // 2. Embed in batches of 32 to avoid memory spikes
-  const BATCH = 32
+  // 2. Embed in batches — reduced from 32 to 16 for reliability
+  const BATCH = 16
+  const BATCH_TIMEOUT_MS = 30_000
   const allVectors: number[][] = []
+
   for (let i = 0; i < allTexts.length; i += BATCH) {
     const batch = allTexts.slice(i, i + BATCH)
-    const vecs = await embedTexts(batch, embedOpts)
+
+    let vecs: number[][] | null = null
+
+    // First attempt: full batch
+    try {
+      vecs = await embedWithTimeout(batch, embedOpts, BATCH_TIMEOUT_MS)
+    } catch (err) {
+      console.warn(`Embed batch [${i}..${i + batch.length - 1}] failed (attempt 1), retrying with smaller batch:`, err)
+
+      // Retry with smaller batch size of 8
+      const SMALL_BATCH = 8
+      const smallBatchVecs: number[][] = []
+      let retryOk = true
+
+      for (let j = 0; j < batch.length; j += SMALL_BATCH) {
+        const smallBatch = batch.slice(j, j + SMALL_BATCH)
+        try {
+          const sv = await embedWithTimeout(smallBatch, embedOpts, BATCH_TIMEOUT_MS)
+          smallBatchVecs.push(...sv)
+        } catch (retryErr) {
+          console.warn(`Small batch [${i + j}..${i + j + smallBatch.length - 1}] also failed, skipping:`, retryErr)
+          // Fill with zero vectors so indices stay aligned
+          for (let k = 0; k < smallBatch.length; k++) {
+            smallBatchVecs.push([])
+          }
+          retryOk = false
+        }
+      }
+
+      vecs = smallBatchVecs
+      if (!retryOk) {
+        console.warn(`Some chunks in batch [${i}..${i + batch.length - 1}] were skipped due to embed errors.`)
+      }
+    }
+
     allVectors.push(...vecs)
+
+    // Always call onProgress after each batch so the UI stays responsive
     onProgress?.({
       stage: 'embedding',
       progress: 0.1 + 0.7 * ((i + batch.length) / allTexts.length),
@@ -55,25 +107,29 @@ export async function indexMind(
   // 3. Clear old chunks for this mind
   await deleteChunksForMind(mind.id)
 
-  // 4. Build VectorChunk objects
+  // 4. Build VectorChunk objects (skip any that have empty/zero vectors)
   const chunks: VectorChunk[] = []
 
   corpusChunks.forEach((c, i) => {
+    const vec = allVectors[i]
+    if (!vec || vec.length === 0) return  // skip failed embeddings
     chunks.push({
       id: `${mind.id}-corpus-${i}`,
       mindId: mind.id,
       text: c.text,
-      vector: allVectors[i],
+      vector: vec,
     })
   })
 
   brainChunks.forEach((c, i) => {
     const vecIdx = corpusChunks.length + i
+    const vec = allVectors[vecIdx]
+    if (!vec || vec.length === 0) return  // skip failed embeddings
     chunks.push({
       id: `${mind.id}-brain-${c.entryIdx}-${c.replyIdx}`,
       mindId: mind.id,
       text: c.text,
-      vector: allVectors[vecIdx],
+      vector: vec,
     })
   })
 
