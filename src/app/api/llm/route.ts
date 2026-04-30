@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
       })
 
       const data = await res.json()
+      // Normalize Anthropic error messages so the client sees a clean string,
+      // not a raw JSON blob (e.g. for 401 authentication_error).
+      if (!res.ok) {
+        const msg = (data as { error?: { message?: string } })?.error?.message || JSON.stringify(data)
+        return NextResponse.json({ error: msg }, { status: res.status })
+      }
       return NextResponse.json(data, { status: res.status })
     }
 

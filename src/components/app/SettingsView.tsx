@@ -12,16 +12,40 @@ interface MindIndexInfo {
   chunkCount?: number
 }
 
-const ANTHROPIC_MODELS = [
-  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (fast)' },
+interface ModelOption {
+  value: string
+  label: string
+}
+
+const ANTHROPIC_MODELS: ModelOption[] = [
   { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6 (most capable)' },
+  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
+  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
 ]
 
-const OPENAI_MODELS = [
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini (fast)' },
+const OPENAI_MODELS: ModelOption[] = [
   { value: 'gpt-4o', label: 'GPT-4o' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+  { value: 'o1', label: 'o1' },
+  { value: 'o1-mini', label: 'o1-mini' },
 ]
+
+const OPENROUTER_FALLBACK_MODELS: ModelOption[] = [
+  { value: 'google/gemma-4-31b-it', label: 'Gemma 4 31B' },
+  { value: 'meta-llama/llama-3.1-8b-instruct', label: 'Llama 3.1 8B' },
+  { value: 'mistralai/mistral-7b-instruct', label: 'Mistral 7B' },
+  { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku via OpenRouter' },
+  { value: 'google/gemma-3-27b-it', label: 'Gemma 3 27B' },
+  { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
+  { value: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B' },
+]
+
+const DEFAULT_MODELS: Record<Provider, string> = {
+  anthropic: 'claude-sonnet-4-6',
+  openai: 'gpt-4o',
+  openrouter: 'google/gemma-4-31b-it',
+}
 
 const PROVIDER_LABELS: Record<Provider, string> = {
   anthropic: 'Anthropic (Claude)',
@@ -50,6 +74,44 @@ export default function SettingsView() {
   const [reindexing, setReindexing] = useState<string | null>(null)
   // Bug #18 fix: debounce timer ref to prevent excessive IDB reads when minds changes rapidly
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // OpenRouter live model list
+  const [orModels, setOrModels] = useState<ModelOption[]>(OPENROUTER_FALLBACK_MODELS)
+  const [orLoading, setOrLoading] = useState(false)
+  const [orSearch, setOrSearch] = useState('')
+  const [orOpen, setOrOpen] = useState(false)
+  const orDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Fetch OpenRouter models when provider is openrouter and apiKey is set
+  useEffect(() => {
+    if (provider !== 'openrouter' || !apiKey) {
+      setOrModels(OPENROUTER_FALLBACK_MODELS)
+      return
+    }
+    setOrLoading(true)
+    fetch('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+      .then(r => r.json())
+      .then((data: { data: { id: string; name: string }[] }) => {
+        if (Array.isArray(data?.data)) {
+          setOrModels(data.data.map(m => ({ value: m.id, label: m.name || m.id })))
+        }
+      })
+      .catch(() => { /* keep fallback */ })
+      .finally(() => setOrLoading(false))
+  }, [provider, apiKey])
+
+  // Close OpenRouter dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (orDropdownRef.current && !orDropdownRef.current.contains(e.target as Node)) {
+        setOrOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -122,9 +184,14 @@ export default function SettingsView() {
   function handleProviderChange(p: Provider) {
     setProvider(p)
     // Reset model to default for the new provider
-    if (p === 'anthropic') setModel(ANTHROPIC_MODELS[0].value)
-    else if (p === 'openai') setModel(OPENAI_MODELS[0].value)
-    else setModel('') // OpenRouter: let user type their own
+    setModel(DEFAULT_MODELS[p])
+    // Reset OpenRouter search state
+    setOrSearch('')
+    setOrOpen(false)
+    // Bug fix: clear the stored API key when switching providers so a key
+    // for provider A is never sent to provider B (causes 401 from Anthropic
+    // when an OpenAI/OpenRouter key is used as x-api-key).
+    setApiKey('')
     setEditing(false)
     setKeyInput('')
   }
@@ -178,14 +245,14 @@ export default function SettingsView() {
               ))}
             </select>
 
-            {/* Model selector — dropdown for Anthropic/OpenAI, text input for OpenRouter */}
+            {/* Model selector */}
             {provider === 'anthropic' && (
               <div>
                 <div className="s" style={{ fontSize: 12, marginBottom: 6 }}>Model</div>
                 <select
                   className="form-input"
                   style={{ fontSize: 13 }}
-                  value={model || ANTHROPIC_MODELS[0].value}
+                  value={model || DEFAULT_MODELS.anthropic}
                   onChange={e => setModel(e.target.value)}
                 >
                   {ANTHROPIC_MODELS.map(m => (
@@ -201,7 +268,7 @@ export default function SettingsView() {
                 <select
                   className="form-input"
                   style={{ fontSize: 13 }}
-                  value={model || OPENAI_MODELS[0].value}
+                  value={model || DEFAULT_MODELS.openai}
                   onChange={e => setModel(e.target.value)}
                 >
                   {OPENAI_MODELS.map(m => (
@@ -214,16 +281,106 @@ export default function SettingsView() {
             {provider === 'openrouter' && (
               <div>
                 <div className="s" style={{ fontSize: 12, marginBottom: 6 }}>
-                  Model string — e.g. <code style={{ fontSize: 11, opacity: 0.8 }}>google/gemma-3-27b-it</code> or <code style={{ fontSize: 11, opacity: 0.8 }}>meta-llama/llama-3.1-8b-instruct</code>
+                  Model{orLoading && <span style={{ marginLeft: 6, opacity: 0.5 }}>Loading…</span>}
                 </div>
-                <input
-                  className="form-input"
-                  style={{ fontSize: 13 }}
-                  type="text"
-                  placeholder="google/gemma-3-27b-it"
-                  value={model}
-                  onChange={e => setModel(e.target.value)}
-                />
+                {/* Searchable dropdown */}
+                <div ref={orDropdownRef} style={{ position: 'relative' }}>
+                  {/* Trigger button showing current selection */}
+                  <button
+                    type="button"
+                    className="form-input"
+                    style={{
+                      fontSize: 13,
+                      width: '100%',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      background: 'var(--bg2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                    }}
+                    onClick={() => { setOrOpen(o => !o); setOrSearch('') }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {orModels.find(m => m.value === model)?.label || model || DEFAULT_MODELS.openrouter}
+                    </span>
+                    <span style={{ marginLeft: 8, opacity: 0.5, flexShrink: 0 }}>▾</span>
+                  </button>
+
+                  {orOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 4px)',
+                      left: 0,
+                      right: 0,
+                      zIndex: 100,
+                      background: 'var(--bg2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                      overflow: 'hidden',
+                    }}>
+                      {/* Search input */}
+                      <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
+                        <input
+                          autoFocus
+                          className="form-input"
+                          type="text"
+                          placeholder="Search models…"
+                          value={orSearch}
+                          onChange={e => setOrSearch(e.target.value)}
+                          style={{ fontSize: 12, width: '100%', padding: '5px 8px' }}
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </div>
+                      {/* Model list */}
+                      <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                        {orModels
+                          .filter(m =>
+                            !orSearch ||
+                            m.label.toLowerCase().includes(orSearch.toLowerCase()) ||
+                            m.value.toLowerCase().includes(orSearch.toLowerCase())
+                          )
+                          .map(m => (
+                            <button
+                              key={m.value}
+                              type="button"
+                              style={{
+                                display: 'block',
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: '8px 14px',
+                                fontSize: 13,
+                                background: m.value === model ? 'var(--accent-soft, rgba(120,100,255,0.12))' : 'transparent',
+                                color: m.value === model ? 'var(--accent, var(--text))' : 'var(--text)',
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg3, var(--bg2))' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = m.value === model ? 'var(--accent-soft, rgba(120,100,255,0.12))' : 'transparent' }}
+                              onClick={() => { setModel(m.value); setOrOpen(false); setOrSearch('') }}
+                            >
+                              <div style={{ fontWeight: 500 }}>{m.label}</div>
+                              <div style={{ fontSize: 11, opacity: 0.5, marginTop: 1 }}>{m.value}</div>
+                            </button>
+                          ))
+                        }
+                        {orModels.filter(m =>
+                          !orSearch ||
+                          m.label.toLowerCase().includes(orSearch.toLowerCase()) ||
+                          m.value.toLowerCase().includes(orSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div style={{ padding: '12px 14px', fontSize: 12, opacity: 0.5, color: 'var(--text2)' }}>
+                            No models match &ldquo;{orSearch}&rdquo;
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
