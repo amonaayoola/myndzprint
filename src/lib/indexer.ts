@@ -127,11 +127,19 @@ export async function indexPublicMindsIfNeeded(
   embedOpts: EmbedOptions = {}
 ): Promise<void> {
   const { hasChunks } = await import('./vectorStore')
+
+  // Corpus is stripped from localStorage to save space, then restored from
+  // the CORPUS map on rehydration. Re-attach it here to guarantee indexMind
+  // always has text to chunk, even if the mind object came from a stale store.
+  const { CORPUS } = await import('../data/corpus')
+
   for (const mind of minds) {
-    if (!mind.corpus) continue
+    const corpus = mind.corpus || CORPUS[mind.id] || ''
+    if (!corpus && !mind.brain?.length) continue
     const already = await hasChunks(mind.id)
     if (!already) {
-      await indexMind(mind, embedOpts).catch(err =>
+      const mindWithCorpus = corpus !== mind.corpus ? { ...mind, corpus } : mind
+      await indexMind(mindWithCorpus, embedOpts).catch(err =>
         console.warn(`Failed to index ${mind.id}:`, err)
       )
     }
