@@ -126,15 +126,21 @@ function matchLocalBrain(mind: Mind, message: string, ctx: ReplyContext): BrainR
   const best = scored[0]
   const entry = mind.brain[best.entryIdx]
   const used = ctx.repliesUsed[best.entryIdx] || []
-  let pickIdx = 0
-  for (let i = 0; i < entry.replies.length; i++) {
-    if (!used.includes(i)) { pickIdx = i; break }
-    pickIdx = i
-  }
+
+  // Reset pool once all variants have been seen
   if (used.length >= entry.replies.length) {
-    pickIdx = used[0] == null ? 0 : used[0]
     ctx.repliesUsed[best.entryIdx] = []
   }
+
+  // Pick randomly from unused variants — avoids predictable order and repeats
+  const unusedIndices = entry.replies
+    .map((_, i) => i)
+    .filter(i => !(ctx.repliesUsed[best.entryIdx] || []).includes(i))
+
+  const pickIdx = unusedIndices.length > 0
+    ? unusedIndices[Math.floor(Math.random() * unusedIndices.length)]
+    : Math.floor(Math.random() * entry.replies.length)
+
   ctx.repliesUsed[best.entryIdx] = [...(ctx.repliesUsed[best.entryIdx] || []), pickIdx]
   return entry.replies[pickIdx]
 }
@@ -143,19 +149,14 @@ function getRedirect(mind: Mind, _message: string, ctx: ReplyContext): BrainRepl
   const fallback = (mind.brain || []).find(e => e.keys.length === 1 && e.keys[0] === '__redirect__')
   if (!fallback) return null
   const recentEntity = ctx.entitiesMentioned[0]
-  let used = ctx.repliesUsed['__redirect__'] || []
-
-  // Bug #11 fix: reset the used list BEFORE picking the next index so that after
-  // exhausting all variants we correctly start from 0 with a fresh used array,
-  // rather than appending pickIdx=0 onto the stale fully-used array.
-  if (used.length >= fallback.replies.length) {
-    used = []
-    ctx.repliesUsed['__redirect__'] = []
-  }
-
+  const used = ctx.repliesUsed['__redirect__'] || []
   let pickIdx = 0
   for (let i = 0; i < fallback.replies.length; i++) {
     if (!used.includes(i)) { pickIdx = i; break }
+  }
+  if (used.length >= fallback.replies.length) {
+    ctx.repliesUsed['__redirect__'] = []
+    pickIdx = 0
   }
   ctx.repliesUsed['__redirect__'] = [...used, pickIdx]
   const reply = fallback.replies[pickIdx]

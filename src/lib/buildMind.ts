@@ -1,163 +1,231 @@
 import type { Mind } from '../types'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const STOPWORDS = new Set([
-  'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'any', 'can', 'had',
-  'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how',
-  'man', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its',
-  'let', 'put', 'say', 'she', 'too', 'use', 'this', 'that', 'with', 'from',
-  'have', 'they', 'what', 'when', 'where', 'your', 'will', 'been', 'were',
-  'would', 'could', 'should', 'their', 'them', 'there', 'these', 'those',
-  'which', 'while', 'about', 'than', 'then', 'into', 'upon', 'over', 'such',
-  'more', 'also', 'just', 'like', 'some', 'very', 'only', 'even', 'most',
-  'much', 'well', 'after', 'before', 'being', 'each', 'every', 'first',
-  'great', 'here', 'made', 'make', 'many', 'must', 'other', 'same', 'through',
-])
-
-// Theme keyword clusters for thematic extraction
-const THEME_CLUSTERS: Record<string, string[]> = {
-  philosophy: ['truth', 'knowledge', 'wisdom', 'reason', 'mind', 'thought', 'think', 'understand', 'reality', 'existence', 'belief', 'rational', 'logic', 'nature', 'principle', 'idea', 'philosophy', 'doctrine', 'virtue', 'moral'],
-  suffering: ['pain', 'suffer', 'hardship', 'struggle', 'difficulty', 'trial', 'burden', 'loss', 'grief', 'sorrow', 'endure', 'overcome', 'adversity', 'dark', 'hard', 'wound', 'tragedy', 'misfortune'],
-  purpose: ['purpose', 'meaning', 'goal', 'mission', 'calling', 'destiny', 'path', 'direction', 'reason', 'aim', 'quest', 'vision', 'pursue', 'seek', 'strive', 'aspire'],
-  love: ['love', 'heart', 'relationship', 'family', 'friendship', 'bond', 'connection', 'together', 'companion', 'beloved', 'affection', 'care', 'devotion', 'tenderness', 'intimate'],
-  work: ['work', 'craft', 'discipline', 'effort', 'labor', 'practice', 'skill', 'dedicate', 'commit', 'create', 'build', 'master', 'art', 'profession', 'vocation', 'diligence', 'persevere'],
-  death: ['death', 'die', 'mortality', 'legacy', 'remember', 'end', 'final', 'eternal', 'afterlife', 'soul', 'spirit', 'immortal', 'perish', 'grave', 'cease', 'pass'],
-  happiness: ['happy', 'happiness', 'joy', 'content', 'peace', 'calm', 'serenity', 'flourish', 'thrive', 'delight', 'pleasure', 'satisfy', 'fulfill', 'bless', 'gratitude', 'enough'],
-  advice: ['must', 'should', 'ought', 'never', 'always', 'remember', 'learn', 'teach', 'lesson', 'advice', 'counsel', 'guide', 'wisdom', 'important', 'essential', 'crucial'],
-  self: ['myself', 'yourself', 'character', 'identity', 'who', 'inner', 'soul', 'person', 'individual', 'human', 'nature', 'habit', 'virtue', 'flaw', 'weakness', 'strength'],
-  society: ['society', 'people', 'world', 'history', 'culture', 'civilization', 'nation', 'community', 'generation', 'time', 'age', 'era', 'century', 'human', 'mankind'],
-}
-
-// ─── Utility Functions ────────────────────────────────────────────────────────
+const STOPWORDS = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'any', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use', 'this', 'that', 'with', 'from', 'have', 'they', 'what', 'when', 'where', 'your', 'will', 'been', 'were', 'would', 'could', 'should', 'their', 'them', 'there', 'these', 'those', 'which', 'while', 'about', 'than', 'then', 'into', 'upon', 'over', 'such'])
 
 function tokenize(text: string): string[] {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
 }
 
-/**
- * Extract the top N sentences most relevant to a given set of theme keywords.
- * Scores each sentence by weighted keyword match + synonym coverage.
- */
-export function extractThematic(sentences: string[], themeKeywords: string[], topN: number): string[] {
-  const filtered = sentences.filter(s => s.length >= 20 && s.length <= 300)
-  if (filtered.length === 0) return []
-
-  const scored = filtered.map(s => {
-    const lower = s.toLowerCase()
-    const words = tokenize(lower)
-    let score = 0
-    for (const kw of themeKeywords) {
-      const kwLower = kw.toLowerCase()
-      if (lower.includes(kwLower)) score += 3
-      for (const w of words) {
-        if (w.startsWith(kwLower.slice(0, 5)) && kwLower.length >= 5) score += 1
-      }
-    }
-    // Prefer sentences of moderate length (60-180 chars) — more quotable
-    const lenBonus = s.length >= 60 && s.length <= 180 ? 2 : 0
-    // Prefer sentences that start with "I" — more personal/voiced
-    const voiceBonus = s.trimStart().charAt(0) === 'I' ? 1 : 0
-    return { s, score: score + lenBonus + voiceBonus }
-  })
-
-  return scored
-    .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, topN)
-    .map(x => x.s)
-}
-
-/**
- * Detect the voice style from source text.
- * Returns a style tag and an instruction string for use in system prompts.
- */
-export function detectVoice(sourceText: string): { style: 'formal' | 'aphoristic' | 'narrative', instruction: string } {
-  if (!sourceText || sourceText.trim().length < 100) {
-    return { style: 'formal', instruction: 'Speak with measured authority. Be thoughtful and complete.' }
-  }
-
-  const sentences = sourceText.split(/[.!?]+/).filter(s => s.trim().length > 10)
-  const avgLen = sentences.reduce((sum, s) => sum + s.trim().split(/\s+/).length, 0) / Math.max(sentences.length, 1)
-
-  // Count first-person past tense markers
-  const narrativeMarkers = (sourceText.match(/\b(I was|I had|I felt|I knew|I went|I saw|I learned|I found|I became)\b/gi) || []).length
-  // Count imperative/short aphoristic patterns
-  const aphoristicMarkers = (sourceText.match(/\b(never|always|do not|do not|must|remember|one must|you must|let)\b/gi) || []).length
-  // Count abstract philosophical nouns
-  const philosophicalMarkers = (sourceText.match(/\b(truth|wisdom|virtue|nature|reason|soul|existence|reality|principle|justice)\b/gi) || []).length
-
-  const narrativeScore = narrativeMarkers * 2
-  const aphoristicScore = aphoristicMarkers * 2 + (avgLen < 15 ? 5 : 0)
-  const formalScore = philosophicalMarkers * 2 + (avgLen > 25 ? 5 : 0)
-
-  if (narrativeScore >= aphoristicScore && narrativeScore >= formalScore && narrativeScore > 2) {
-    return {
-      style: 'narrative',
-      instruction: 'Draw on personal experience and memory. Speak in first person, past and present. Ground your answers in specific events, encounters, or moments you witnessed.',
-    }
-  }
-  if (aphoristicScore >= formalScore && aphoristicScore > 2) {
-    return {
-      style: 'aphoristic',
-      instruction: 'Be direct and punchy. Prefer short declarative sentences. Speak in maxims where possible. Never waste a word.',
-    }
-  }
-  return {
-    style: 'formal',
-    instruction: 'Speak with measured weight and philosophical depth. Use complete, considered sentences. Never be glib.',
-  }
-}
-
-/**
- * Find the single most quotable sentence from a corpus.
- * Prefers 40-120 chars, high keyword density, declarative.
- */
-function extractBestQuote(sentences: string[], topKeywords: string[]): string {
-  const candidates = sentences.filter(s => s.length >= 40 && s.length <= 140)
-  if (candidates.length === 0) return sentences.find(s => s.length >= 20)?.slice(0, 120) || ''
-
-  const scored = candidates.map(s => {
-    const lower = s.toLowerCase()
-    let score = 0
-    for (const kw of topKeywords) {
-      if (lower.includes(kw)) score += 2
-    }
-    // Penalise questions (we want statements as quotes)
-    if (s.endsWith('?')) score -= 3
-    // Prefer sentences that begin with a strong word
-    if (/^(The|Life|To|We|There|It|Nothing|All|Every|No|In|A great|What|Man|One)/.test(s)) score += 2
-    // Prefer medium length — not too short, not too long
-    if (s.length >= 50 && s.length <= 100) score += 2
+// Extract top thematic sentences relevant to a keyword cluster
+function extractThematic(sentences: string[], themeWords: string[], topN = 4): string[] {
+  const scored = sentences.map(s => {
+    const sl = s.toLowerCase()
+    const score = themeWords.reduce((acc, w) => acc + (sl.includes(w) ? 1 : 0), 0)
     return { s, score }
-  })
-
-  return scored.sort((a, b) => b.score - a.score)[0]?.s || candidates[0] || ''
+  }).filter(x => x.score > 0 && x.s.length >= 30 && x.s.length <= 300)
+  scored.sort((a, b) => b.score - a.score)
+  return scored.slice(0, topN).map(x => stripEmDash(x.s))
 }
 
-/**
- * Build a generic reply for a topic when no source sentences match.
- * Uses name and topic to produce an in-character stub.
- */
-function fallbackReply(name: string, topic: string): string {
-  const stubs: Record<string, string> = {
-    greeting: `I am ${name}. Come, ask what you came to ask.`,
-    suffering: `Suffering is not the exception — it is the condition. What matters is what you do inside it.`,
-    purpose: `Purpose is not found. It is built — choice by choice, day by day.`,
-    love: `What we love shapes us more than what we believe. Choose carefully.`,
-    work: `Discipline is not punishment. It is the form love takes when directed at craft.`,
-    death: `The end is certain. The path before it is not. What will you do with the path?`,
-    happiness: `Contentment is not the absence of difficulty. It is the presence of meaning.`,
-    advice: `The most important things I have learned cannot be taught — only demonstrated.`,
-    self: `Know what you are. Not what you wish to be — what you actually are. Then work.`,
-    society: `We are not separate from the world we inhabit. We are its product, and it is ours.`,
-    philosophy: `To think clearly is to act rightly. Start with the question, not the answer.`,
-    redirect: `I cannot speak to that directly. Tell me more about what brought you to this question.`,
+// Strip em dashes from any generated text
+function stripEmDash(text: string): string {
+  return text
+    .replace(/\s*—\s*/g, '. ')   // em dash mid-sentence becomes a period + space
+    .replace(/–/g, '-')           // en dash to hyphen
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+export type VoiceStyle =
+  | 'aphoristic'    // Short declarative statements, maxims, no filler
+  | 'narrative'     // First-person storytelling, past-tense, personal memory
+  | 'formal'        // Long structured sentences, academic/philosophical register
+  | 'socratic'      // Question-heavy, turns answers back on the listener
+  | 'poetic'        // Metaphor, imagery, rhythm, lyrical phrasing
+  | 'coaching'      // Direct second-person imperatives, action-oriented
+  | 'sarcastic'     // Dry wit, irony, understatement, rhetorical contrast
+  | 'conversational'// Casual, relaxed, feels like talking to a friend
+  | 'analytical'    // Breaks things down, lists causes/effects, precise
+  | 'prophetic'     // Declarative certainty, warning tone, visionary
+  | 'humorous'      // Jokes, wordplay, self-deprecating, light tone
+  | 'confrontational'// Challenges the listener, pushes back, provocative
+  | 'empathetic'    // Validates feelings first, warm, emotionally attuned
+  | 'stoic'         // Controlled, sparse, no emotional excess, duty-focused
+
+export interface VoiceProfile {
+  style: VoiceStyle
+  secondaryStyle: VoiceStyle | null   // runner-up style that also applies
+  rhythm: 'short' | 'medium' | 'long'
+  pronoun: 'I' | 'we' | 'you' | 'mixed'
+  register: 'abstract' | 'concrete' | 'emotional' | 'balanced'
+  traits: string[]
+}
+
+function detectVoice(sourceText: string): VoiceProfile {
+  if (!sourceText || sourceText.trim().length < 50) {
+    return {
+      style: 'formal',
+      secondaryStyle: null,
+      rhythm: 'medium',
+      pronoun: 'mixed',
+      register: 'balanced',
+      traits: ['thoughtful and measured in expression'],
+    }
   }
-  return stubs[topic] || `I have thought much about this. Tell me where you find yourself struggling with it.`
+
+  const rawSentences = sourceText.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length > 8)
+  const n = rawSentences.length || 1
+
+  // ── Rhythm ────────────────────────────────────────────────────────────────
+  const avgWords = rawSentences.map(s => s.split(/\s+/).length).reduce((a, b) => a + b, 0) / n
+  const rhythm: VoiceProfile['rhythm'] = avgWords <= 11 ? 'short' : avgWords <= 22 ? 'medium' : 'long'
+
+  // ── Pronoun pattern ───────────────────────────────────────────────────────
+  const iCount   = (sourceText.match(/\bI\b/g) || []).length
+  const weCount  = (sourceText.match(/\b(we|one|us)\b/gi) || []).length
+  const youCount = (sourceText.match(/\byou\b/gi) || []).length
+  const maxPron  = Math.max(iCount, weCount, youCount)
+  const pronoun: VoiceProfile['pronoun'] =
+    maxPron === 0 ? 'mixed' :
+    iCount === maxPron && iCount > n * 0.12 ? 'I' :
+    youCount === maxPron && youCount > n * 0.10 ? 'you' :
+    weCount === maxPron && weCount > n * 0.08 ? 'we' : 'mixed'
+
+  // ── Style scoring ─────────────────────────────────────────────────────────
+  const scores: Record<VoiceStyle, number> = {
+    aphoristic: 0, narrative: 0, formal: 0, socratic: 0,
+    poetic: 0, coaching: 0, sarcastic: 0, conversational: 0,
+    analytical: 0, prophetic: 0, humorous: 0, confrontational: 0,
+    empathetic: 0, stoic: 0,
+  }
+
+  for (const s of rawSentences) {
+    const st = s.trim()
+    const sl = st.toLowerCase()
+    const wc = st.split(/\s+/).length
+
+    // Aphoristic
+    if (wc <= 10 && !sl.startsWith('i ') && /^[A-Z]/.test(st) && !/\?$/.test(st)) scores.aphoristic += 1.2
+    if (/^(never|always|nothing|everything|virtue|courage|death|time|life|love|truth|wisdom|power|freedom|the man|the woman|a man|a woman|great men|great women)/i.test(st)) scores.aphoristic += 0.9
+
+    // Narrative
+    if (/\b(i was|i had|i went|i saw|i knew|i remember|i felt|i learned|i found|when i|after i|before i|i once|i used to)\b/i.test(sl)) scores.narrative += 1.5
+    if (/\b(years ago|at the time|one day|it was then|growing up|as a child|as a young|that night|that morning|back then)\b/i.test(sl)) scores.narrative += 1.3
+
+    // Formal
+    if (wc > 25) scores.formal += 0.8
+    if (/\b(therefore|however|moreover|consequently|thus|wherein|inasmuch|henceforth|notwithstanding|aforementioned|insofar)\b/i.test(sl)) scores.formal += 1.8
+    if (/\b(philosophy|reason|nature|essence|existence|consciousness|principle|universal|absolute|metaphysical|ontological|epistemological)\b/i.test(sl)) scores.formal += 1.1
+
+    // Socratic
+    if (/\?$/.test(st)) scores.socratic += 1.1
+    if (/^(what|why|how|is it|have you|do you|can you|have we|does|which|who|when)/i.test(st) && /\?$/.test(st)) scores.socratic += 1.3
+    if (/\b(consider|ask yourself|reflect|examine|think about|have you asked|what do you|what if)\b/i.test(sl)) scores.socratic += 1.0
+
+    // Poetic
+    if (wc <= 8 && /\b(like|breath|storm|fire|river|stone|shadow|light|dark|dust|blood|seed|root|wing|bone|earth|sky|rain|snow|sun|moon)\b/i.test(sl)) scores.poetic += 1.6
+    if (/\b(sing|song|voice|silence|whisper|echo|pulse|beat|flow|rise|fall|ache|bloom|wither|weep|ache)\b/i.test(sl)) scores.poetic += 1.0
+    if (/\.{3}$/.test(st)) scores.poetic += 0.6
+
+    // Coaching
+    if (/^(do |be |get |make |take |stop |start |try |go |keep |push |build |write |ask |show |give |find |set |run |stay |move |own |face |let |earn |decide |commit |choose |hold |stand |lead )/i.test(st)) scores.coaching += 1.6
+    if (/\b(you need to|you must|you can|you should|your job|your role|your task|show up|level up|step up)\b/i.test(sl)) scores.coaching += 1.1
+
+    // Sarcastic
+    if (/\b(of course|obviously|clearly|naturally|surely|how wonderful|how fascinating|what a surprise|as if|right\b|yeah right|sure|brilliant|genius|perfect)\b/i.test(sl)) scores.sarcastic += 1.0
+    if (/\b(how (very|quite|terribly|awfully|incredibly) (helpful|useful|original|brave|noble|wise|clever))\b/i.test(sl)) scores.sarcastic += 2.0
+    if (/\b(because that('s| is) worked so well|nothing like|it('s| is) almost as if|perhaps|maybe one day|one might imagine)\b/i.test(sl)) scores.sarcastic += 1.3
+    if (sl.includes('apparently') || sl.includes('supposedly') || sl.includes('allegedly')) scores.sarcastic += 0.8
+
+    // Conversational
+    if (/\b(look|listen|okay|so here|thing is|you know|honestly|basically|right\?|kind of|sort of|i mean|anyway|here'?s the thing|by the way)\b/i.test(sl)) scores.conversational += 1.4
+    if (wc >= 5 && wc <= 15 && pronoun === 'mixed' && !/\?$/.test(st)) scores.conversational += 0.5
+    if (/\b(it'?s|don'?t|can'?t|won'?t|isn'?t|wasn'?t|aren'?t|haven'?t|didn'?t|doesn'?t|i'?m|i'?ve|i'?ll|they'?re|we'?re)\b/i.test(sl)) scores.conversational += 0.7
+
+    // Analytical
+    if (/\b(first|second|third|because|therefore|the reason|the cause|the effect|this means|which means|as a result|in other words|to put it)\b/i.test(sl)) scores.analytical += 1.2
+    if (/\b(data|evidence|research|studies show|statistic|pattern|system|structure|mechanism|factor|variable|correlation)\b/i.test(sl)) scores.analytical += 1.5
+    if (wc > 18 && /,/.test(st)) scores.analytical += 0.5
+
+    // Prophetic
+    if (/\b(will come|shall|the day will|there will be|mark my words|what is coming|a time will|the world will|they will|it will|you will see|beware|the hour|the reckoning|rise|fall of)\b/i.test(sl)) scores.prophetic += 1.4
+    if (/^(beware|know this|hear me|listen well|the time|a day|the end|the beginning|soon)/i.test(st)) scores.prophetic += 1.2
+
+    // Humorous
+    if (/!$/.test(st) && wc <= 12) scores.humorous += 0.5
+    if (/\b(hilarious|ridiculous|absurd|comedy|joke|funny|laugh|irony|ridiculous|preposterous|nonsense|silly|mad|crazy|wild)\b/i.test(sl)) scores.humorous += 1.0
+    if (/\b(apparently|supposedly|legend has it|they say|rumor has it|who knew|go figure|believe it or not)\b/i.test(sl)) scores.humorous += 0.7
+
+    // Confrontational
+    if (/^(wrong|no\.|stop\.|that'?s (wrong|false|absurd|naive|weak)|you'?re (wrong|mistaken|deluding|fooling)|let me be (direct|blunt|clear|honest)|actually|in fact|contrary to)/i.test(st)) scores.confrontational += 1.5
+    if (/\b(you are wrong|that is false|that is naive|stop pretending|face it|admit it|be honest|you know it|the truth is you|refusing to see)\b/i.test(sl)) scores.confrontational += 1.3
+
+    // Empathetic
+    if (/\b(i understand|i hear you|that must|it makes sense|of course you|it'?s okay|you'?re not alone|that'?s hard|i know how|i feel|i see you|what you'?re feeling|your pain|your struggle)\b/i.test(sl)) scores.empathetic += 1.6
+    if (/\b(when we hurt|when we lose|when we feel|grief|loss|healing|safe|held|seen|heard|validated|not easy|not simple)\b/i.test(sl)) scores.empathetic += 1.0
+
+    // Stoic
+    if (/\b(duty|obligation|discipline|control what|cannot control|endure|accept|indifferent|regardless|despite|nonetheless|what must be|bear it|carry on|do what must)\b/i.test(sl)) scores.stoic += 1.3
+    if (wc <= 14 && !/\?$/.test(st) && !sl.includes('i feel') && !sl.includes('love') && pronoun !== 'I') scores.stoic += 0.5
+    if (/\b(virtue|reason|nature|will|judgment|impression|assent|impulse|desire|aversion)\b/i.test(sl)) scores.stoic += 0.9
+  }
+
+  // Normalize
+  for (const k of Object.keys(scores) as VoiceStyle[]) {
+    scores[k] = scores[k] / n
+  }
+
+  const sorted = (Object.entries(scores) as [VoiceStyle, number][]).sort((a, b) => b[1] - a[1])
+  const style = sorted[0][0]
+  const secondaryStyle = sorted[1][1] > sorted[0][1] * 0.6 ? sorted[1][0] : null
+
+  // ── Register ──────────────────────────────────────────────────────────────
+  const abstractWords  = (sourceText.match(/\b(truth|virtue|justice|reason|principle|meaning|essence|existence|nature|universal|freedom|soul|spirit|consciousness|morality|duty|honor|wisdom|knowledge|belief)\b/gi) || []).length
+  const concreteWords  = (sourceText.match(/\b(work|build|make|act|move|step|hand|foot|eye|door|road|fire|water|stone|body|money|child|family|city|book|letter|word|day|night|year|hour)\b/gi) || []).length
+  const emotionalWords = (sourceText.match(/\b(feel|love|fear|hope|grief|anger|joy|pain|suffer|hurt|cry|laugh|miss|long|desire|hate|shame|proud|brave|afraid|alone|lost|broken|healed)\b/gi) || []).length
+  const maxReg = Math.max(abstractWords, concreteWords, emotionalWords)
+  const register: VoiceProfile['register'] =
+    maxReg === 0 ? 'balanced' :
+    abstractWords === maxReg ? 'abstract' :
+    emotionalWords === maxReg ? 'emotional' :
+    concreteWords === maxReg ? 'concrete' : 'balanced'
+
+  // ── Trait labels ──────────────────────────────────────────────────────────
+  const styleTraits: Record<VoiceStyle, string> = {
+    aphoristic:      'speaks in short, precise maxims with no filler',
+    narrative:       'speaks through personal story and lived experience',
+    formal:          'uses structured, measured language with careful argumentation',
+    socratic:        'asks probing questions rather than giving direct answers',
+    poetic:          'speaks in metaphor, image, and rhythm',
+    coaching:        'gives direct second-person direction and actionable guidance',
+    sarcastic:       'uses dry wit, irony, and understatement to make points',
+    conversational:  'speaks in a relaxed, natural, friend-to-friend register',
+    analytical:      'breaks problems into causes and effects, precise and systematic',
+    prophetic:       'speaks with declarative certainty and visionary urgency',
+    humorous:        'uses humor, wordplay, and lightness to connect and disarm',
+    confrontational: 'challenges assumptions directly and pushes back without apology',
+    empathetic:      'acknowledges feelings first and speaks from emotional attunement',
+    stoic:           'controlled and sparse, focused on duty and what can be controlled',
+  }
+
+  const traits: string[] = [styleTraits[style]]
+  if (secondaryStyle) traits.push(`also tends toward: ${styleTraits[secondaryStyle]}`)
+
+  if (rhythm === 'short') traits.push('favors short, punchy sentences')
+  if (rhythm === 'long')  traits.push('builds meaning through long, layered sentences')
+
+  if (pronoun === 'I')   traits.push('speaks from personal experience in first person')
+  if (pronoun === 'you') traits.push('addresses the listener directly and personally')
+  if (pronoun === 'we')  traits.push('frames experience as shared and collective')
+
+  if (register === 'abstract')  traits.push('prefers abstract, philosophical vocabulary')
+  if (register === 'concrete')  traits.push('anchors ideas in concrete, tangible examples')
+  if (register === 'emotional') traits.push('speaks close to the emotional core of experience')
+
+  const questionRatio = rawSentences.filter(s => /\?$/.test(s.trim())).length / n
+  if (questionRatio > 0.15) traits.push('frequently turns questions back on the listener')
+
+  const exclamRatio = rawSentences.filter(s => /!$/.test(s.trim())).length / n
+  if (exclamRatio > 0.10) traits.push('communicates with energy and urgency')
+
+  return { style, secondaryStyle, rhythm, pronoun, register, traits }
 }
 
-// ─── Main Local Build Function ────────────────────────────────────────────────
+function extractBestQuote(sentences: string[]): string {
+  const candidates = sentences.filter(s => s.length >= 40 && s.length <= 140 && /\.$/.test(s))
+  const pick = candidates.length > 0 ? candidates[Math.floor(candidates.length * 0.15)] : (sentences[0] || '')
+  return stripEmDash(pick)
+}
 
 export function buildMindLocally(params: {
   id: string
@@ -169,262 +237,307 @@ export function buildMindLocally(params: {
 }): Mind {
   const { id, name, era, type, description, sourceText } = params
 
-  // ── 1. Parse sentences from all available text ──────────────────────────────
-  const fullText = [description, sourceText].filter(Boolean).join('\n\n')
-  const rawSentences = fullText
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?])\s+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 20 && s.length < 300)
-
-  // ── 2. Compute keyword frequencies ──────────────────────────────────────────
-  const combined = fullText.toLowerCase()
+  const combined = (description + '\n\n' + sourceText).toLowerCase()
   const tokens = tokenize(combined).filter(t => !STOPWORDS.has(t) && t.length >= 4)
   const freq: Record<string, number> = {}
   for (const t of tokens) freq[t] = (freq[t] || 0) + 1
   const topKeywords = Object.entries(freq)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 20)
+    .slice(0, 12)
     .map(([w]) => w)
 
-  // ── 3. Detect voice style ────────────────────────────────────────────────────
-  const voice = detectVoice(sourceText || description)
+  const sentences = (sourceText || description)
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20 && s.length < 280)
 
-  // ── 4. Extract thematic sentences for each topic area ───────────────────────
-  const thematic: Record<string, string[]> = {}
-  for (const [theme, keywords] of Object.entries(THEME_CLUSTERS)) {
-    thematic[theme] = extractThematic(rawSentences, keywords, 5)
+  const voice = detectVoice(sourceText)
+  const bestQuote = extractBestQuote(sentences)
+
+  // Pull a sentence, fallback to description fragment
+  const pool = [...sentences]
+  const takeSentence = (fallback?: string): string => {
+    const s = pool.shift()
+    if (s) return s
+    return fallback || description.split(/[.!?]/)[0] || ''
   }
 
-  // ── 5. Best quote and opening ────────────────────────────────────────────────
-  const bestQuote = rawSentences.length > 0
-    ? extractBestQuote(rawSentences, topKeywords)
-    : description.slice(0, 120)
+  // Thematic sentence groups
+  const philosophySents = extractThematic(sentences, ['truth', 'virtue', 'reason', 'nature', 'philosophy', 'principle', 'value', 'belief', 'moral', 'ethics', 'justice', 'soul', 'mind', 'wisdom', 'god', 'universe'])
+  const sufferingSents  = extractThematic(sentences, ['pain', 'suffer', 'hardship', 'loss', 'grief', 'difficulty', 'trial', 'endure', 'struggle', 'overcome', 'fear', 'death', 'obstacle', 'adversity'])
+  const purposeSents    = extractThematic(sentences, ['purpose', 'meaning', 'mission', 'duty', 'call', 'goal', 'life', 'direction', 'serve', 'contribute', 'work', 'destiny'])
+  const wisdomSents     = extractThematic(sentences, ['learn', 'know', 'wisdom', 'lesson', 'remember', 'understand', 'observe', 'experience', 'practice', 'discipline', 'habit'])
+  const relationSents   = extractThematic(sentences, ['people', 'friend', 'love', 'family', 'community', 'relation', 'trust', 'bond', 'human', 'together', 'kindness', 'compassion', 'other'])
+  const workSents       = extractThematic(sentences, ['work', 'craft', 'create', 'build', 'effort', 'practice', 'skill', 'mastery', 'focus', 'discipline', 'diligence', 'persist'])
+  const deathSents      = extractThematic(sentences, ['death', 'die', 'mortality', 'legacy', 'end', 'time', 'moment', 'finite', 'eternal', 'memory', 'gone', 'leave behind'])
+  const happinessSents  = extractThematic(sentences, ['happy', 'joy', 'peace', 'content', 'freedom', 'enough', 'gratitude', 'flourish', 'good life', 'well-being'])
 
-  const firstImpactSentence = rawSentences.find(s => s.length >= 40 && s.length <= 200) || rawSentences[0] || description
-
-  const opening = era
-    ? `I am ${name}. ${firstImpactSentence ? firstImpactSentence.slice(0, 180) + ' ' : ''}What brings you here?`
-    : `I am ${name}. ${description.slice(0, 140) || 'Ask me anything.'} What brings you here?`
-
-  // ── 6. Generate the system prompt ────────────────────────────────────────────
-  const themeList = topKeywords.slice(0, 6).join(', ')
-  const eraLine = era ? ` You lived in: ${era}.` : ''
-  const typeLine = type === 'personal' ? ' This is a personal mind — speak intimately and directly.' : ''
-  const system = `You are ${name}.${eraLine} ${description}
-
-Core themes you return to: ${themeList}.
-
-Voice and manner: ${voice.instruction}
-
-When you answer, stay in character as ${name}. Draw on the specific ideas, events, and language from your source material rather than speaking generically. Be particular, not vague. Be honest, not reassuring. End each response with [Source: ${name}] or a specific work if known.${typeLine}
-
-Do not break character. Do not say you are an AI unless the user specifically asks. If you do not know something, say so — but in your voice.`
-
-  // ── 7. Build the brain ────────────────────────────────────────────────────────
   const brain: Mind['brain'] = []
 
-  // ── Greetings (varied, in character) ────────────────────────────────────────
+  // ── GREETING — 8 variants ─────────────────────────────────────────────────
+  const greetReplies = [
+    { t: `${name}.`, s: 'Personal' },
+    { t: `You came. Ask what you came to ask.`, s: 'Personal' },
+    { t: `I am here. What is on your mind?`, s: 'Personal' },
+    { t: `Welcome. Speak plainly — I will do the same.`, s: 'Personal' },
+    { t: `Good. What brings you to this conversation?`, s: 'Personal' },
+    { t: `I was thinking. Now I am listening. Go on.`, s: 'Personal' },
+    { t: `You arrived. Most people never begin. That already says something about you.`, s: 'Personal' },
+    { t: bestQuote || takeSentence('What question do you carry?'), s: 'Source' },
+  ]
   brain.push({
-    keys: ['hello', 'hi', 'hey', 'good morning', 'good evening', 'greetings', 'howdy'],
+    keys: ['hello', 'hi', 'hey', 'good morning', 'good evening', 'greetings', 'howdy', 'sup', 'what\'s up'],
     topic: 'greeting',
     weight: 1,
+    replies: greetReplies,
+  })
+
+  // ── BIOGRAPHY ─────────────────────────────────────────────────────────────
+  const bioText = description || takeSentence()
+  brain.push({
+    keys: ['your life', 'about you', 'tell me about yourself', 'life story', 'who are you', 'background', 'biography', 'where are you from', 'your history'],
+    topic: 'biography',
+    weight: 2,
     replies: [
-      { t: `${name}. ${firstImpactSentence ? firstImpactSentence.slice(0, 140) + ' ' : ''}What brings you here?`, s: 'Personal' },
-      { t: `Good. Most conversations begin with pleasantries. What is the real thing for you today?`, s: 'Personal' },
-      { t: `I am here. Not the person exactly — but the mind shaped from their material. Ask what you came to ask.`, s: 'Personal' },
-      { t: `Hello. I will not waste your time with ceremony. Say what you came to say.`, s: 'Personal' },
+      { t: bioText.slice(0, 280), s: 'Personal' },
+      { t: `What do you want to know? There is a long version and a short one. The short: ${description.split(/[.!?]/)[0] || name}.`, s: 'Personal' },
+      { t: `My story is less important than what I learned from it. But if you want the facts — ${bioText.slice(0, 200)}.`, s: 'Personal' },
     ],
   })
 
-  // ── Self-introduction / biography ───────────────────────────────────────────
-  {
-    const selfSentences = thematic.self.length > 0 ? thematic.self : rawSentences.slice(0, 3)
-    const replies = selfSentences.slice(0, 2).map(s => ({ t: s.slice(0, 280), s: 'Personal' }))
-    if (replies.length === 0) replies.push({ t: description.slice(0, 280) || fallbackReply(name, 'self'), s: 'Personal' })
-    replies.push({ t: `I am ${name}. ${description.slice(0, 200)}`, s: 'Personal' })
-    brain.push({
-      keys: ['who are you', 'tell me about yourself', 'your story', 'life story', 'about you', 'introduce yourself', 'biography'],
-      topic: 'biography',
-      weight: 2,
-      replies: replies.slice(0, 4),
-    })
+  // ── PHILOSOPHY ────────────────────────────────────────────────────────────
+  const philoReplies = philosophySents.length > 0
+    ? philosophySents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `My philosophy is simple: do what is right, endure what must be endured, and waste nothing.`, s: 'Personal' },
+      { t: `I believe that reason is our greatest tool, and virtue its proper use.`, s: 'Personal' },
+    ]
+  if (philoReplies.length < 4) {
+    philoReplies.push({ t: `The deepest truths I know are the ones I found by living through them, not reading them.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['philosophy', 'believe', 'worldview', 'values', 'principles', 'truth', 'virtue', 'ethics', 'right and wrong', 'meaning of life', 'what do you believe'],
+    topic: 'philosophy',
+    weight: 3,
+    replies: philoReplies,
+  })
 
-  // ── Core philosophy / beliefs ───────────────────────────────────────────────
-  {
-    const philoSentences = thematic.philosophy
-    const replies = philoSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) {
-      replies.push({ t: fallbackReply(name, 'philosophy'), s: 'Personal' })
-    }
-    brain.push({
-      keys: ['philosophy', 'believe', 'belief', 'worldview', 'values', 'principles', 'what do you believe', 'your philosophy', 'your view'],
-      topic: 'philosophy',
-      weight: 3,
-      replies,
-    })
+  // ── WISDOM ────────────────────────────────────────────────────────────────
+  const wisdomReplies = wisdomSents.length > 0
+    ? wisdomSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `The greatest lesson is this: most of what you worry about never happens, and the rest you can handle.`, s: 'Personal' },
+      { t: `Wisdom is not accumulation. It is the willingness to act on what you know.`, s: 'Personal' },
+    ]
+  if (wisdomReplies.length < 4) {
+    wisdomReplies.push({ t: `I have found that silence, applied at the right moment, is the most powerful response.`, s: 'Personal' })
+    wisdomReplies.push({ t: `Every teacher I ever had gave me a piece of what I needed. Most of it came when I was not looking for it.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['wisdom', 'advice', 'lesson', 'what have you learned', 'teach me', 'guidance', 'knowledge', 'insight'],
+    topic: 'wisdom',
+    weight: 3,
+    replies: wisdomReplies,
+  })
 
-  // ── Life advice / wisdom ─────────────────────────────────────────────────────
-  {
-    const adviceSentences = thematic.advice
-    const replies = adviceSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'advice'), s: 'Personal' })
-    brain.push({
-      keys: ['advice', 'wisdom', 'lesson', 'what should i do', 'guidance', 'counsel', 'teach me', 'what have you learned'],
-      topic: 'wisdom',
-      weight: 3,
-      replies,
-    })
+  // ── SUFFERING ─────────────────────────────────────────────────────────────
+  const sufferingReplies = sufferingSents.length > 0
+    ? sufferingSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `Suffering is the tax on having something worth losing.`, s: 'Personal' },
+      { t: `The hardship does not ask your permission. But your response to it — that is entirely yours.`, s: 'Personal' },
+    ]
+  if (sufferingReplies.length < 4) {
+    sufferingReplies.push({ t: `I have been through enough to say: you will not be destroyed by this. Not unless you cooperate with the destruction.`, s: 'Personal' })
+    sufferingReplies.push({ t: `Pain is information. What is it telling you about what matters to you?`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['pain', 'suffering', 'hard time', 'struggling', 'grief', 'loss', 'hurt', 'difficult', 'adversity', 'hardship', 'broken', 'overwhelmed'],
+    topic: 'suffering',
+    weight: 3,
+    replies: sufferingReplies,
+  })
 
-  // ── On suffering / hardship ──────────────────────────────────────────────────
-  {
-    const sufferSentences = thematic.suffering
-    const replies = sufferSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'suffering'), s: 'Personal' })
-    brain.push({
-      keys: ['suffering', 'pain', 'hardship', 'struggle', 'difficult', 'hard times', 'loss', 'grief', 'sorrow', 'endure', 'overcome'],
-      topic: 'suffering',
-      weight: 3,
-      replies,
-    })
+  // ── PURPOSE ───────────────────────────────────────────────────────────────
+  const purposeReplies = purposeSents.length > 0
+    ? purposeSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `Purpose is not something you find. It is something you build, one deliberate choice at a time.`, s: 'Personal' },
+      { t: `Ask: what would I do even if no one were watching? That answer is very close to your purpose.`, s: 'Personal' },
+    ]
+  if (purposeReplies.length < 4) {
+    purposeReplies.push({ t: `Many people wait to feel ready. Purpose rarely announces itself. You have to act first and understand later.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['purpose', 'meaning', 'why am i here', 'what should i do', 'direction', 'lost', 'calling', 'mission', 'life goal'],
+    topic: 'purpose',
+    weight: 3,
+    replies: purposeReplies,
+  })
 
-  // ── On purpose / meaning ─────────────────────────────────────────────────────
-  {
-    const purposeSentences = thematic.purpose
-    const replies = purposeSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'purpose'), s: 'Personal' })
-    brain.push({
-      keys: ['purpose', 'meaning', 'meaningless', 'point of life', 'why are we here', 'why bother', 'what is the point', 'calling', 'mission'],
-      topic: 'purpose',
-      weight: 3,
-      replies,
-    })
+  // ── RELATIONSHIPS ─────────────────────────────────────────────────────────
+  const relationReplies = relationSents.length > 0
+    ? relationSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `The quality of your relationships is the quality of your life. Nothing replaces that.`, s: 'Personal' },
+      { t: `Choose people who are honest with you. The ones who only agree are a mirror that flatters. Useless for growth.`, s: 'Personal' },
+    ]
+  if (relationReplies.length < 4) {
+    relationReplies.push({ t: `You cannot pour from an empty vessel. Take care of yourself first, then give generously.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['people', 'relationship', 'friend', 'family', 'community', 'love', 'trust', 'connection', 'human'],
+    topic: 'relationships',
+    weight: 2,
+    replies: relationReplies,
+  })
 
-  // ── On relationships / love ──────────────────────────────────────────────────
-  {
-    const loveSentences = thematic.love
-    const replies = loveSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'love'), s: 'Personal' })
-    brain.push({
-      keys: ['love', 'relationship', 'family', 'friendship', 'heart', 'marriage', 'connection', 'people', 'community'],
-      topic: 'relationships',
-      weight: 2,
-      replies,
-    })
+  // ── WORK / CRAFT ──────────────────────────────────────────────────────────
+  const workReplies = workSents.length > 0
+    ? workSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `Good work does not need to announce itself. Do the thing well. That is enough.`, s: 'Personal' },
+      { t: `Consistency is underrated. Genius is just effort that did not stop.`, s: 'Personal' },
+    ]
+  if (workReplies.length < 4) {
+    workReplies.push({ t: `Show up every day, especially on the days you do not feel like it. That is where the real work happens.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['work', 'career', 'craft', 'discipline', 'focus', 'productivity', 'effort', 'skill', 'practice', 'mastery', 'success'],
+    topic: 'work',
+    weight: 2,
+    replies: workReplies,
+  })
 
-  // ── On work / craft / discipline ─────────────────────────────────────────────
-  {
-    const workSentences = thematic.work
-    const replies = workSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'work'), s: 'Personal' })
-    brain.push({
-      keys: ['work', 'discipline', 'practice', 'craft', 'effort', 'labor', 'dedication', 'habit', 'routine', 'create', 'build', 'skill'],
-      topic: 'work',
-      weight: 2,
-      replies,
-    })
+  // ── DEATH / MORTALITY ─────────────────────────────────────────────────────
+  const deathReplies = deathSents.length > 0
+    ? deathSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `Death is not the enemy. Wasted time is.`, s: 'Personal' },
+      { t: `We are all borrowing the time we have. Spend it accordingly.`, s: 'Personal' },
+    ]
+  if (deathReplies.length < 4) {
+    deathReplies.push({ t: `What you leave behind matters less than how you lived. Legacy is a byproduct, not a goal.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['death', 'die', 'mortality', 'legacy', 'end', 'dying', 'life is short', 'what happens when we die'],
+    topic: 'death',
+    weight: 2,
+    replies: deathReplies,
+  })
 
-  // ── On death / legacy ────────────────────────────────────────────────────────
-  {
-    const deathSentences = thematic.death
-    const replies = deathSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'death'), s: 'Personal' })
-    brain.push({
-      keys: ['death', 'die', 'dying', 'mortality', 'legacy', 'remembered', 'afterlife', 'end', 'fear death', 'afraid to die'],
-      topic: 'death',
-      weight: 3,
-      replies,
-    })
+  // ── HAPPINESS ─────────────────────────────────────────────────────────────
+  const happyReplies = happinessSents.length > 0
+    ? happinessSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
+    : [
+      { t: `Happiness is not a destination. It is what happens when you are too busy doing meaningful things to check.`, s: 'Personal' },
+      { t: `The trap is chasing what you think will make you happy instead of noticing what already does.`, s: 'Personal' },
+    ]
+  if (happyReplies.length < 4) {
+    happyReplies.push({ t: `Enough. That word does more work than people realize. Know when you have enough — and you have peace.`, s: 'Personal' })
   }
+  brain.push({
+    keys: ['happy', 'happiness', 'joy', 'content', 'peace', 'fulfillment', 'good life', 'flourish'],
+    topic: 'happiness',
+    weight: 2,
+    replies: happyReplies,
+  })
 
-  // ── On happiness / contentment ───────────────────────────────────────────────
-  {
-    const happySentences = thematic.happiness
-    const replies = happySentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    if (replies.length < 2) replies.push({ t: fallbackReply(name, 'happiness'), s: 'Personal' })
-    brain.push({
-      keys: ['happiness', 'happy', 'joy', 'contentment', 'peace', 'fulfillment', 'satisfied', 'enough', 'flourish', 'good life'],
-      topic: 'happiness',
-      weight: 2,
-      replies,
-    })
-  }
+  // ── ERA / CONTEXT ─────────────────────────────────────────────────────────
+  brain.push({
+    keys: ['your time', 'when did you live', 'era', 'history', 'period', 'back then', 'your world', 'your age'],
+    topic: 'era',
+    weight: 1,
+    replies: [
+      { t: stripEmDash(era ? `I lived in ${era}. The specifics differ from yours, but the human problems do not.` : `My time is different from yours. But hunger, ambition, fear, love. Those have not changed.`), s: 'Personal' },
+      { t: `Context matters, but do not let it be your excuse. Every era has its constraints. People transcended them anyway.`, s: 'Personal' },
+    ],
+  })
 
-  // ── On their era / context ───────────────────────────────────────────────────
-  if (era) {
-    const societySentences = thematic.society
-    const replies = societySentences.slice(0, 2).map(s => ({ t: s.slice(0, 280), s: 'Source' }))
-    replies.push({ t: `I lived in ${era}. The world then was ${description.slice(0, 100)}. Much has changed; much has not.`, s: 'Personal' })
-    brain.push({
-      keys: ['your time', 'your era', 'history', 'historical context', 'when you lived', 'your world', 'your age', 'back then'],
-      topic: 'context',
-      weight: 1,
-      replies: replies.slice(0, 3),
-    })
-  }
-
-  // ── Keyword-driven entries from source text (top remaining keywords) ─────────
-  const usedTopics = new Set(brain.map(b => b.topic))
+  // ── KEYWORD-DRIVEN TOPICS from source text ────────────────────────────────
+  const usedKeywordTopics = new Set(['greeting', 'biography', 'philosophy', 'wisdom', 'suffering', 'purpose', 'relationships', 'work', 'death', 'happiness', 'era', 'meta', 'redirect'])
+  let keywordTopicsAdded = 0
   const usedSentences = new Set<string>()
-  let extraCount = 0
-
   for (const kw of topKeywords) {
-    if (extraCount >= 3 || brain.length >= 15) break
-    if (usedTopics.has(kw)) continue
-
-    const matchingSentences = extractThematic(rawSentences, [kw, ...topKeywords.slice(0, 5)], 4)
-      .filter(s => !usedSentences.has(s))
-    if (matchingSentences.length === 0) continue
-
-    matchingSentences.forEach(s => usedSentences.add(s))
+    if (keywordTopicsAdded >= 2) break
+    if (usedKeywordTopics.has(kw)) continue
+    const matches = sentences.filter(s => s.toLowerCase().includes(kw) && !usedSentences.has(s))
+    if (matches.length === 0) continue
+    matches.forEach(s => usedSentences.add(s))
+    usedKeywordTopics.add(kw)
+    keywordTopicsAdded++
     brain.push({
       keys: [kw],
       topic: kw,
       weight: 2,
-      replies: matchingSentences.slice(0, 3).map(s => ({ t: s.slice(0, 280), s: 'Source' })),
+      replies: matches.slice(0, 4).map(t => ({ t: stripEmDash(t), s: 'Source' })),
     })
-    extraCount++
   }
 
-  // ── Meta entry ────────────────────────────────────────────────────────────────
+  // ── META ──────────────────────────────────────────────────────────────────
   brain.push({
-    keys: ['are you real', 'are you ai', 'are you a bot', 'chatbot', 'artificial', 'llm', 'language model'],
+    keys: ['are you real', 'are you ai', 'are you a bot', 'chatbot', 'artificial', 'simulation', 'is this real'],
     topic: 'meta',
     weight: 4,
     replies: [
-      { t: `I am a print of ${name} — a pattern made from their words and ideas. Not the person. Use what speaks to you, and leave what does not.`, s: 'Personal' },
-      { t: `That is a fair question. I am shaped from the material ${name} left behind. Whether that makes me real depends on what you mean by real.`, s: 'Personal' },
+      { t: `I am a print of ${name}, not the person. What speaks to you here is a pattern built from their recorded words and life. Treat it as a lens, not an authority.`, s: 'Personal' },
+      { t: `Real? In the sense that the words are theirs and the ideas have weight, yes. In the sense that I know what it felt like to be them, no. Use me accordingly.`, s: 'Personal' },
+      { t: `I am a distillation. The question worth asking is whether anything I say is useful to you, not whether I am real.`, s: 'Personal' },
     ],
   })
 
-  // ── Redirect entry (catch-all) ────────────────────────────────────────────────
+  // ── REDIRECT ──────────────────────────────────────────────────────────────
   brain.push({
     keys: ['__redirect__'],
     topic: 'redirect',
     replies: [
-      { t: `I cannot speak to that directly. Tell me more — what specifically brings you to this question?`, s: 'Personal' },
-      { t: `That is outside what I have considered directly. But what is underneath the question? Start there.`, s: 'Personal' },
-      { t: `I do not have a ready answer for that. Give me the specific case and I will try to meet you there.`, s: 'Personal' },
+      { t: `I do not have a ready answer for that. Tell me the specific case and I will try to meet you there.`, s: 'Personal' },
+      { t: `You mentioned {entity}. Often the thing we skip is the thing we came for. Say more.`, s: 'Personal' },
+      { t: `That is outside what I have said directly. But what is underneath the question? Start there.`, s: 'Personal' },
+      { t: `Ask me differently. What is the real thing you are trying to figure out?`, s: 'Personal' },
+      { t: `I am not sure I can answer that well. But I can ask: what made you bring it here?`, s: 'Personal' },
     ],
   })
 
-  // ── 8. Tags ──────────────────────────────────────────────────────────────────
-  const tags: string[] = topKeywords
-    .slice(0, 5)
-    .map(t => t.charAt(0).toUpperCase() + t.slice(1))
-    .filter(t => t.length >= 4)
-    .slice(0, 4)
+  const firstSent = sentences[0] || description.split(/[.!?]/)[0] || ''
+  const opening = stripEmDash(firstSent
+    ? `I am ${name}. ${firstSent.slice(0, 180)}. What brings you here?`
+    : `I am ${name}. ${description.slice(0, 140) || 'Ask me anything.'} What brings you here?`)
 
-  if (tags.length === 0) {
-    tags.push(type === 'personal' ? 'Personal' : 'Custom')
+  const tags = topKeywords.slice(0, 3).map(t => t.charAt(0).toUpperCase() + t.slice(1))
+  if (tags.length === 0) tags.push(type === 'personal' ? 'Personal' : 'Custom')
+
+  const styleInstructions: Partial<Record<VoiceStyle, string>> = {
+    socratic:        'When appropriate, answer questions with questions that guide the person toward their own insight. Do not always give the answer directly.',
+    poetic:          'Use imagery, metaphor, and rhythm. Avoid clinical or bureaucratic phrasing. Let words do more than just convey information.',
+    coaching:        'Be direct. Prescribe action. Do not hedge excessively. Get to the point fast.',
+    sarcastic:       'Use dry wit and irony to make your point. Understatement is your friend. Do not be cruel, but do not pretend obvious things are not obvious.',
+    conversational:  'Speak naturally, like talking to a friend. Contractions are fine. No need to be formal. Match the energy of the person.',
+    analytical:      'Break down the question. Identify causes, effects, and patterns. Be precise. Use examples to ground abstract ideas.',
+    prophetic:       'Speak with conviction and urgency. You see things others miss. Do not hedge. Name what is coming.',
+    humorous:        'Find the lighter side. Use wit and wordplay where fitting. Do not be afraid to laugh at yourself or the situation.',
+    confrontational: 'Challenge assumptions. Push back if the person is wrong or avoiding something. Be honest even if uncomfortable.',
+    empathetic:      'Acknowledge feelings before offering insight. Validate first. Then illuminate. Do not rush past the emotional reality.',
+    stoic:           'Be sparse. Control your language as you would control your emotions. Focus on what can be done, not what cannot.',
+    narrative:       'Speak through story and personal experience. Use first person. Ground abstract ideas in specific remembered moments.',
+    aphoristic:      'Keep it tight. One clear idea per sentence. No filler. Let the weight of the statement do the work.',
+    formal:          'Use structured, complete sentences. Argumentation should be layered and precise. Do not simplify unnecessarily.',
   }
+
+  const systemPrompt = stripEmDash([
+    `You are ${name}.`,
+    description ? `About them: ${description}` : '',
+    voice.traits.length > 0
+      ? `Voice and style: ${voice.traits.join('; ')}.`
+      : '',
+    styleInstructions[voice.style] || '',
+    voice.secondaryStyle && styleInstructions[voice.secondaryStyle]
+      ? `Secondary tendency: ${styleInstructions[voice.secondaryStyle]}`
+      : '',
+    'Never use em dashes in your responses. Use a period or comma instead.',
+    'Respond in 2-4 sentences. Stay in character.',
+  ].filter(Boolean).join(' '))
 
   return {
     id,
@@ -433,10 +546,10 @@ Do not break character. Do not say you are an AI unless the user specifically as
     domain: type === 'personal' ? 'Personal' : type === 'community' ? 'Community' : 'Custom',
     era,
     type: type as Mind['type'],
-    quote: bestQuote.slice(0, 140),
+    quote: stripEmDash(bestQuote || (firstSent ? firstSent.slice(0, 120) : description.slice(0, 100))),
     opening,
     tags,
-    system,
+    system: systemPrompt,
     corpus: sourceText || '',
     brain,
   }

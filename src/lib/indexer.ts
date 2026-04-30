@@ -1,7 +1,8 @@
 /**
  * indexer.ts
- * Orchestrates: chunk corpus → embed → save to IndexedDB
+ * Orchestrates: chunk corpus → label → embed → save to IndexedDB
  * Called when a mind is built or its corpus is updated.
+ * Chunks carry topic/register/source labels for TagRAG-style retrieval.
  */
 import { chunkCorpus, chunkBrain } from './chunker'
 import { embedTexts, type EmbedOptions } from './embedder'
@@ -16,20 +17,6 @@ export interface IndexProgress {
 
 type ProgressCallback = (p: IndexProgress) => void
 
-/** Embed a batch of texts with a timeout. Rejects if it takes longer than `ms`. */
-function embedWithTimeout(
-  batch: string[],
-  embedOpts: EmbedOptions,
-  ms: number
-): Promise<number[][]> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Embed batch timed out after ${ms}ms`)), ms)
-    embedTexts(batch, embedOpts)
-      .then(vecs => { clearTimeout(timer); resolve(vecs) })
-      .catch(err => { clearTimeout(timer); reject(err) })
-  })
-}
-
 export async function indexMind(
   mind: Mind,
   embedOpts: EmbedOptions = {},
@@ -37,9 +24,8 @@ export async function indexMind(
 ): Promise<number> {
   onProgress?.({ stage: 'chunking', progress: 0, chunkCount: 0 })
 
-  // 1. Chunk the corpus
   const corpusChunks = chunkCorpus(mind.corpus || '')
-  const brainChunks = chunkBrain(mind)
+  const brainChunks  = chunkBrain(mind)
 
   const allTexts = [
     ...corpusChunks.map(c => c.text),
@@ -50,51 +36,37 @@ export async function indexMind(
 
   onProgress?.({ stage: 'embedding', progress: 0.1, chunkCount: allTexts.length })
 
-  // 2. Embed in batches — reduced from 32 to 16 for reliability
+  // Embed in batches — smaller batch = less memory pressure, more stable
   const BATCH = 16
-  const BATCH_TIMEOUT_MS = 30_000
-  const allVectors: number[][] = []
+  const TIMEOUT_MS = 30_000
+  const allVectors: Float32Array[] = []
 
   for (let i = 0; i < allTexts.length; i += BATCH) {
     const batch = allTexts.slice(i, i + BATCH)
 
-    let vecs: number[][] | null = null
-
-    // First attempt: full batch
+    let vecs: Float32Array[]
     try {
-      vecs = await embedWithTimeout(batch, embedOpts, BATCH_TIMEOUT_MS)
-    } catch (err) {
-      console.warn(`Embed batch [${i}..${i + batch.length - 1}] failed (attempt 1), retrying with smaller batch:`, err)
-
-      // Retry with smaller batch size of 8
-      const SMALL_BATCH = 8
-      const smallBatchVecs: number[][] = []
-      let retryOk = true
-
-      for (let j = 0; j < batch.length; j += SMALL_BATCH) {
-        const smallBatch = batch.slice(j, j + SMALL_BATCH)
-        try {
-          const sv = await embedWithTimeout(smallBatch, embedOpts, BATCH_TIMEOUT_MS)
-          smallBatchVecs.push(...sv)
-        } catch (retryErr) {
-          console.warn(`Small batch [${i + j}..${i + j + smallBatch.length - 1}] also failed, skipping:`, retryErr)
-          // Fill with zero vectors so indices stay aligned
-          for (let k = 0; k < smallBatch.length; k++) {
-            smallBatchVecs.push([])
-          }
-          retryOk = false
-        }
-      }
-
-      vecs = smallBatchVecs
-      if (!retryOk) {
-        console.warn(`Some chunks in batch [${i}..${i + batch.length - 1}] were skipped due to embed errors.`)
+      vecs = await Promise.race([
+        embedTexts(batch, embedOpts),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('embed timeout')), TIMEOUT_MS)
+        ),
+      ])
+    } catch {
+      // Retry at half batch size before giving up on this batch
+      try {
+        const half = Math.ceil(batch.length / 2)
+        const v1 = await embedTexts(batch.slice(0, half), embedOpts)
+        const v2 = await embedTexts(batch.slice(half), embedOpts)
+        vecs = [...v1, ...v2]
+      } catch {
+        // Skip batch entirely with zero vectors so indexing always completes
+        console.warn(`Skipping batch at offset ${i} after retry failure`)
+        vecs = batch.map(() => new Float32Array(384))
       }
     }
 
     allVectors.push(...vecs)
-
-    // Always call onProgress after each batch so the UI stays responsive
     onProgress?.({
       stage: 'embedding',
       progress: 0.1 + 0.7 * ((i + batch.length) / allTexts.length),
@@ -104,45 +76,43 @@ export async function indexMind(
 
   onProgress?.({ stage: 'saving', progress: 0.8, chunkCount: allTexts.length })
 
-  // 3. Clear old chunks for this mind
   await deleteChunksForMind(mind.id)
 
-  // 4. Build VectorChunk objects (skip any that have empty/zero vectors)
   const chunks: VectorChunk[] = []
 
   corpusChunks.forEach((c, i) => {
-    const vec = allVectors[i]
-    if (!vec || vec.length === 0) return  // skip failed embeddings
+    if (!allVectors[i]) return
     chunks.push({
       id: `${mind.id}-corpus-${i}`,
       mindId: mind.id,
       text: c.text,
-      vector: vec,
+      vector: allVectors[i],
+      topicLabel: c.topicLabel,
+      registerLabel: c.registerLabel,
+      sourceType: 'corpus',
     })
   })
 
   brainChunks.forEach((c, i) => {
     const vecIdx = corpusChunks.length + i
-    const vec = allVectors[vecIdx]
-    if (!vec || vec.length === 0) return  // skip failed embeddings
+    if (!allVectors[vecIdx]) return
     chunks.push({
       id: `${mind.id}-brain-${c.entryIdx}-${c.replyIdx}`,
       mindId: mind.id,
       text: c.text,
-      vector: vec,
+      vector: allVectors[vecIdx],
+      topicLabel: c.topicLabel,
+      registerLabel: c.registerLabel,
+      sourceType: 'brain',
     })
   })
 
-  // 5. Save to IndexedDB
   await saveChunks(chunks)
 
   onProgress?.({ stage: 'done', progress: 1, chunkCount: chunks.length })
   return chunks.length
 }
 
-/**
- * Re-index a mind unconditionally — use when corpus is updated.
- */
 export async function reIndexMind(
   mind: Mind,
   embedOpts: EmbedOptions = {},
@@ -152,10 +122,6 @@ export async function reIndexMind(
   return indexMind(mind, embedOpts, onProgress)
 }
 
-/**
- * Index all public minds that haven't been indexed yet.
- * Called once on app startup in the background.
- */
 export async function indexPublicMindsIfNeeded(
   minds: Mind[],
   embedOpts: EmbedOptions = {}
