@@ -5,16 +5,15 @@ import type { Mind, Message, AppState, BuildState } from '../types'
 import { PUBLIC_MINDS } from '../data/minds'
 import { CORPUS } from '../data/corpus'
 
-// Attach corpus to public minds
 const MINDS_WITH_CORPUS: Mind[] = PUBLIC_MINDS.map(m => ({
   ...m,
   corpus: CORPUS[m.id] || m.corpus || '',
 }))
 
+export type Provider = 'anthropic' | 'openai' | 'openrouter'
+
 interface Store extends AppState {
   minds: Mind[]
-  provider: 'anthropic' | 'openai' | 'openrouter'
-  model: string
 
   // Navigation
   setPage: (page: AppState['page']) => void
@@ -38,10 +37,13 @@ interface Store extends AppState {
   // Library
   setActiveTag: (tag: string) => void
 
-  // Settings
+  // Settings — multi-provider
+  apiKey: string
+  provider: Provider
+  model: string
   setApiKey: (key: string) => void
-  setProvider: (provider: 'anthropic' | 'openai' | 'openrouter') => void
-  setModel: (model: string) => void
+  setProvider: (p: Provider) => void
+  setModel: (m: string) => void
 
   // Build
   buildState: BuildState
@@ -77,10 +79,9 @@ export const useAppStore = create<Store>()(
       currentMindId: null,
       conversations: initialConversations,
       activeTag: 'All',
-      // Bug #3 fix: removed NEXT_PUBLIC_ prefix — apiKey is user-supplied, not an env var here
-      apiKey: '',
-      provider: 'anthropic',
-      model: '',
+      apiKey: process.env.NEXT_PUBLIC_ANTHROPIC_KEY || '',
+      provider: 'anthropic' as Provider,
+      model: 'claude-haiku-4-5-20251001',
       minds: MINDS_WITH_CORPUS,
       buildState: defaultBuildState,
       earlyAccessOpen: false,
@@ -96,7 +97,6 @@ export const useAppStore = create<Store>()(
         set({ user: { name, email }, page: 'app', appView: 'home' })
         const { minds, conversations } = get()
         if (!get().currentMindId) set({ currentMindId: minds[0]?.id ?? null })
-        // Ensure all minds have conversation slots
         const updated = { ...conversations }
         for (const m of minds) {
           if (!updated[m.id]) updated[m.id] = []
@@ -106,7 +106,6 @@ export const useAppStore = create<Store>()(
       logout: () => {
         const convReset: Record<string, Message[]> = {}
         for (const m of MINDS_WITH_CORPUS) convReset[m.id] = []
-        // Bug #7 fix: clear apiKey from store and localStorage on logout
         set({
           user: null,
           page: 'landing',
@@ -116,15 +115,6 @@ export const useAppStore = create<Store>()(
           minds: MINDS_WITH_CORPUS,
           apiKey: '',
         })
-        // Also purge from localStorage to prevent key leakage
-        try {
-          const raw = localStorage.getItem('myndzprint-store')
-          if (raw) {
-            const parsed = JSON.parse(raw)
-            if (parsed?.state) delete parsed.state.apiKey
-            localStorage.setItem('myndzprint-store', JSON.stringify(parsed))
-          }
-        } catch { /* ignore storage errors */ }
       },
 
       // Minds
@@ -133,7 +123,6 @@ export const useAppStore = create<Store>()(
         const { minds } = get()
         const updated = minds.map(m => m.id === mindId ? { ...m, corpus } : m)
         set({ minds: updated })
-        // Re-index in background
         const mind = updated.find(m => m.id === mindId)
         if (mind) {
           import('../lib/indexer').then(({ reIndexMind }) => {
@@ -150,8 +139,6 @@ export const useAppStore = create<Store>()(
           currentMindId: mind.id,
           appView: 'chat',
         })
-        // Only index if not already indexed (BuildModal indexes with progress UI;
-        // this covers minds added programmatically without going through BuildModal)
         if (mind.corpus || mind.brain?.length) {
           import('../lib/vectorStore').then(({ hasChunks }) => {
             hasChunks(mind.id).then(already => {
@@ -182,7 +169,7 @@ export const useAppStore = create<Store>()(
 
       // Settings
       setApiKey: (key) => set({ apiKey: key }),
-      setProvider: (provider) => set({ provider }),
+      setProvider: (provider) => set({ provider, apiKey: '', model: defaultModelForProvider(provider) }),
       setModel: (model) => set({ model }),
 
       // Build
@@ -195,42 +182,54 @@ export const useAppStore = create<Store>()(
     }),
     {
       name: 'myndzprint-store',
-      // Bug #2 fix: strip apiKey from partialize so it's never persisted to localStorage.
-      // Also strips corpus from persisted minds (~40KB each) — re-attached on rehydration.
       partialize: (s) => ({
         user: s.user,
-        // apiKey intentionally omitted — never persisted
+        apiKey: s.apiKey,
         provider: s.provider,
         model: s.model,
         conversations: s.conversations,
         currentMindId: s.currentMindId,
         minds: s.minds.map(m => ({ ...m, corpus: '' })),
       }),
-      // Bug #13 fix: use the set function instead of direct mutation on the state object.
-      // Direct mutation works in some Zustand versions but is unreliable and not the
-      // documented API — use the set callback form instead.
-      onRehydrateStorage: () => (state, set) => {
-        if (!state || !set) return
-
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        if (state.user) {
+          state.page = 'app'
+          if (!state.appView) state.appView = 'home'
+        }
         const publicIds = new Set(MINDS_WITH_CORPUS.map(m => m.id))
         const userMinds = (state.minds || [])
           .filter((m: Mind) => !publicIds.has(m.id))
           .map((m: Mind) => ({ ...m, corpus: CORPUS[m.id] || m.corpus || '' }))
-        const mergedMinds = [...MINDS_WITH_CORPUS, ...userMinds]
-
-        const convs = { ...(state.conversations || {}) }
-        for (const m of mergedMinds) {
+        state.minds = [...MINDS_WITH_CORPUS, ...userMinds]
+        const convs = state.conversations || {}
+        for (const m of state.minds) {
           if (!convs[m.id]) convs[m.id] = []
         }
-
-        // Restore page state based on persisted user — page itself isn't persisted
-        // so refresh always defaults to 'landing'. Fix: go to app if user exists.
-        set({
-          minds: mergedMinds,
-          conversations: convs,
-          ...(state.user ? { page: 'app' as const, appView: state.appView || 'home' as const } : {}),
-        })
+        state.conversations = convs
+        // Defaults for fields added after initial release
+        if (!state.provider) state.provider = 'anthropic'
+        if (!state.model) state.model = 'claude-haiku-4-5-20251001'
       },
     }
   )
 )
+
+export function defaultModelForProvider(provider: Provider): string {
+  if (provider === 'anthropic') return 'claude-haiku-4-5-20251001'
+  if (provider === 'openai') return 'gpt-4o-mini'
+  return 'openai/gpt-4o-mini' // openrouter default
+}
+
+export const ANTHROPIC_MODELS = [
+  { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (fast)' },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (smart)' },
+  { id: 'claude-opus-4-6', label: 'Claude Opus 4.6 (best)' },
+]
+
+export const OPENAI_MODELS = [
+  { id: 'gpt-4o-mini', label: 'GPT-4o Mini (fast)' },
+  { id: 'gpt-4o', label: 'GPT-4o (smart)' },
+  { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+  { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (cheapest)' },
+]

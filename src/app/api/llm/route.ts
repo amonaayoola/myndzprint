@@ -1,131 +1,124 @@
-/**
- * /api/llm — unified multi-provider LLM proxy.
- * Accepts: { provider, apiKey, model, system, messages, max_tokens }
- * Returns:  { content: [{ text: string }] }  (normalized Anthropic-style response)
- *
- * Supported providers:
- *   'anthropic'  → api.anthropic.com/v1/messages
- *   'openai'     → api.openai.com/v1/chat/completions
- *   'openrouter' → openrouter.ai/api/v1/chat/completions
- */
 import { NextRequest, NextResponse } from 'next/server'
 
-type Provider = 'anthropic' | 'openai' | 'openrouter'
-
-interface LLMRequest {
-  provider?: Provider
-  apiKey?: string
-  model?: string
-  system?: string
-  messages: { role: string; content: string }[]
-  max_tokens?: number
-}
-
-// Normalize an OpenAI-compatible response to Anthropic content format
-function normalizeOpenAIResponse(data: Record<string, unknown>): { content: { text: string }[] } {
-  const choices = data.choices as { message?: { content?: string } }[] | undefined
-  const text = choices?.[0]?.message?.content ?? ''
-  return { content: [{ text }] }
-}
+export const runtime = 'edge'
 
 export async function POST(req: NextRequest) {
   try {
-    const body: LLMRequest = await req.json()
-    const { provider = 'anthropic', apiKey, model, system, messages, max_tokens = 500 } = body
+    const body = await req.json()
+    const { system, messages, max_tokens = 500, provider = 'anthropic', model } = body
 
-    const key = (apiKey as string | undefined) || process.env.ANTHROPIC_KEY || ''
-    if (!key) {
-      return NextResponse.json({ error: 'No API key configured' }, { status: 401 })
-    }
-
-    // ── Anthropic ──────────────────────────────────────────────────────────────
+    // ── Anthropic ─────────────────────────────────────────────────────────────
     if (provider === 'anthropic') {
-      const anthropicModel = model || 'claude-haiku-4-5-20251001'
-      const anthropicBody: Record<string, unknown> = {
-        model: anthropicModel,
-        max_tokens,
-        messages,
+      const apiKey =
+        process.env.ANTHROPIC_API_KEY ||
+        process.env.NEXT_PUBLIC_ANTHROPIC_KEY ||
+        body.apiKey
+
+      if (!apiKey) {
+        return NextResponse.json({ error: { message: 'No Anthropic API key configured.' } }, { status: 401 })
       }
-      if (system) anthropicBody.system = system
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': key,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
         },
-        body: JSON.stringify(anthropicBody),
+        body: JSON.stringify({
+          model: model || process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
+          max_tokens,
+          system,
+          messages,
+        }),
       })
 
-      const data = await res.json()
-      // Normalize Anthropic error messages so the client sees a clean string,
-      // not a raw JSON blob (e.g. for 401 authentication_error).
       if (!res.ok) {
-        const msg = (data as { error?: { message?: string } })?.error?.message || JSON.stringify(data)
-        return NextResponse.json({ error: msg }, { status: res.status })
+        const err = await res.json().catch(() => ({ error: { message: res.statusText } }))
+        return NextResponse.json(err, { status: res.status })
       }
-      return NextResponse.json(data, { status: res.status })
+
+      return NextResponse.json(await res.json())
     }
 
-    // ── OpenAI ─────────────────────────────────────────────────────────────────
+    // ── OpenAI ────────────────────────────────────────────────────────────────
     if (provider === 'openai') {
-      const openaiModel = model || 'gpt-4o-mini'
-      const openaiMessages: { role: string; content: string }[] = []
-      if (system) openaiMessages.push({ role: 'system', content: system })
-      openaiMessages.push(...messages)
+      const apiKey =
+        process.env.OPENAI_API_KEY ||
+        process.env.NEXT_PUBLIC_OPENAI_KEY ||
+        body.apiKey
+
+      if (!apiKey) {
+        return NextResponse.json({ error: { message: 'No OpenAI API key configured.' } }, { status: 401 })
+      }
 
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: openaiModel,
-          messages: openaiMessages,
+          model: model || 'gpt-4o-mini',
           max_tokens,
+          messages: [
+            ...(system ? [{ role: 'system', content: system }] : []),
+            ...messages,
+          ],
         }),
       })
 
-      const data: Record<string, unknown> = await res.json()
       if (!res.ok) {
-        return NextResponse.json(data, { status: res.status })
+        const err = await res.json().catch(() => ({ error: { message: res.statusText } }))
+        return NextResponse.json(err, { status: res.status })
       }
-      return NextResponse.json(normalizeOpenAIResponse(data))
+
+      const data = await res.json()
+      // Normalize to Anthropic format: { content: [{ text }] }
+      const text = data.choices?.[0]?.message?.content || ''
+      return NextResponse.json({ content: [{ text }] })
     }
 
-    // ── OpenRouter ─────────────────────────────────────────────────────────────
+    // ── OpenRouter ────────────────────────────────────────────────────────────
     if (provider === 'openrouter') {
-      const orModel = model || 'google/gemma-3-27b-it'
-      const orMessages: { role: string; content: string }[] = []
-      if (system) orMessages.push({ role: 'system', content: system })
-      orMessages.push(...messages)
+      const apiKey =
+        process.env.OPENROUTER_API_KEY ||
+        body.apiKey
+
+      if (!apiKey) {
+        return NextResponse.json({ error: { message: 'No OpenRouter API key configured.' } }, { status: 401 })
+      }
 
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://myndzprint.com',
+          'X-Title': 'Myndzprint',
         },
         body: JSON.stringify({
-          model: orModel,
-          messages: orMessages,
+          model: model || 'openai/gpt-4o-mini',
           max_tokens,
+          messages: [
+            ...(system ? [{ role: 'system', content: system }] : []),
+            ...messages,
+          ],
         }),
       })
 
-      const data: Record<string, unknown> = await res.json()
       if (!res.ok) {
-        return NextResponse.json(data, { status: res.status })
+        const err = await res.json().catch(() => ({ error: { message: res.statusText } }))
+        return NextResponse.json(err, { status: res.status })
       }
-      return NextResponse.json(normalizeOpenAIResponse(data))
+
+      const data = await res.json()
+      const text = data.choices?.[0]?.message?.content || ''
+      return NextResponse.json({ content: [{ text }] })
     }
 
-    return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 })
+    return NextResponse.json({ error: { message: `Unknown provider: ${provider}` } }, { status: 400 })
   } catch (err) {
-    console.error('[/api/llm]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: { message: String(err) } }, { status: 500 })
   }
 }
