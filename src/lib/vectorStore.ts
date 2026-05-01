@@ -47,14 +47,16 @@ async function db(): Promise<IDBPDatabase> {
   if (_db) return _db
   try {
     _db = await openDB(DB_NAME, VERSION, {
-      upgrade(db, oldVersion) {
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        let store
         if (oldVersion < 1) {
-          const store = db.createObjectStore(STORE, { keyPath: 'id' })
+          store = db.createObjectStore(STORE, { keyPath: 'id' })
           store.createIndex('mindId', 'mindId')
+        } else {
+          store = transaction.objectStore(STORE)
         }
         if (oldVersion < 2) {
-          // v2: add topicLabel and registerLabel indexes for filtered retrieval
-          const store = db.transaction.objectStore(STORE)
+          // v2: add topicLabel and sourceType indexes for TagRAG filtered retrieval
           if (!store.indexNames.contains('topicLabel')) store.createIndex('topicLabel', 'topicLabel')
           if (!store.indexNames.contains('sourceType')) store.createIndex('sourceType', 'sourceType')
         }

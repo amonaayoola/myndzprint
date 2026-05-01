@@ -100,6 +100,13 @@ function hashEmbed(text: string): Float32Array {
 }
 
 async function embedOffline(texts: string[]): Promise<Float32Array[]> {
+  // Under Turbopack (Next.js dev), @xenova/transformers dynamic imports crash
+  // with "Cannot convert undefined or null to object" at Object.keys.
+  // Skip the pipeline entirely in dev and use hashEmbed which always works.
+  // In production (webpack build), Transformers.js loads fine.
+  if (process.env.NODE_ENV === 'development') {
+    return texts.map(t => hashEmbed(t || ''))
+  }
   try {
     const pipe = await getOfflinePipeline()
     const results: Float32Array[] = []
@@ -110,9 +117,8 @@ async function embedOffline(texts: string[]): Promise<Float32Array[]> {
     }
     return results
   } catch {
-    // Transformers.js unavailable (Turbopack, WASM blocked, etc.)
-    // Fall back to keyword hash embeddings so indexing always completes
-    console.warn('Transformers.js unavailable — using keyword hash embeddings (lower quality). Add OPENAI_API_KEY to .env.local for full quality.')
+    // Transformers.js unavailable — fall back to keyword hash embeddings
+    console.warn('Transformers.js unavailable — using keyword hash embeddings. Add OPENAI_API_KEY to .env.local for full quality.')
     return texts.map(t => hashEmbed(t || ''))
   }
 }
