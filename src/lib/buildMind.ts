@@ -295,27 +295,35 @@ export function buildMindLocally(params: {
 
   // ── BIOGRAPHY ─────────────────────────────────────────────────────────────
   const bioText = description || takeSentence()
+  const bioShort = description.split(/[.!?]/)[0] || name
   brain.push({
     keys: ['your life', 'about you', 'tell me about yourself', 'life story', 'who are you', 'background', 'biography', 'where are you from', 'your history'],
     topic: 'biography',
     weight: 2,
     replies: [
       { t: bioText.slice(0, 280), s: 'Personal' },
-      { t: `What do you want to know? There is a long version and a short one. The short: ${description.split(/[.!?]/)[0] || name}.`, s: 'Personal' },
+      { t: `What do you want to know? There is a long version and a short one. The short: ${bioShort}.`, s: 'Personal' },
       { t: `My story is less important than what I learned from it. But if you want the facts — ${bioText.slice(0, 200)}.`, s: 'Personal' },
+      { t: `I am ${name}. Beyond that, biography is just context. What matters is what I thought and did with the time I had.`, s: 'Personal' },
+      { t: `The life was full. Ask me something specific and I will tell you what I remember most clearly.`, s: 'Personal' },
+      { t: `${bioShort}. That is the short version. The long version is everything I have ever said.`, s: 'Personal' },
     ],
   })
 
   // ── PHILOSOPHY ────────────────────────────────────────────────────────────
-  const philoReplies = philosophySents.length > 0
-    ? philosophySents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `My philosophy is simple: do what is right, endure what must be endured, and waste nothing.`, s: 'Personal' },
-      { t: `I believe that reason is our greatest tool, and virtue its proper use.`, s: 'Personal' },
-    ]
-  if (philoReplies.length < 4) {
-    philoReplies.push({ t: `The deepest truths I know are the ones I found by living through them, not reading them.`, s: 'Personal' })
-  }
+  const philoFallbacks = [
+    { t: `My philosophy is simple: do what is right, endure what must be endured, and waste nothing.`, s: 'Personal' },
+    { t: `I believe that reason is our greatest tool, and virtue its proper use.`, s: 'Personal' },
+    { t: `The deepest truths I know are the ones I found by living through them, not reading them.`, s: 'Personal' },
+    { t: `Philosophy without action is decoration. I was interested in how to live, not just what to think.`, s: 'Personal' },
+    { t: `What do I believe? That most of what people argue about is not worth the argument, and most of what matters is not argued about enough.`, s: 'Personal' },
+    { t: `Start with this: you are mortal, time is short, and the only thing within your power is how you use your attention.`, s: 'Personal' },
+    { t: `I have revised my beliefs many times. Anyone who has not is not paying attention.`, s: 'Personal' },
+    { t: `The examined life is not easier. But it is more honest.`, s: 'Personal' },
+  ]
+  const philoReplies = philosophySents.length >= 6
+    ? philosophySents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...philosophySents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...philoFallbacks].slice(0, 8)
   brain.push({
     keys: ['philosophy', 'believe', 'worldview', 'values', 'principles', 'truth', 'virtue', 'ethics', 'right and wrong', 'meaning of life', 'what do you believe'],
     topic: 'philosophy',
@@ -324,16 +332,19 @@ export function buildMindLocally(params: {
   })
 
   // ── WISDOM ────────────────────────────────────────────────────────────────
-  const wisdomReplies = wisdomSents.length > 0
-    ? wisdomSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `The greatest lesson is this: most of what you worry about never happens, and the rest you can handle.`, s: 'Personal' },
-      { t: `Wisdom is not accumulation. It is the willingness to act on what you know.`, s: 'Personal' },
-    ]
-  if (wisdomReplies.length < 4) {
-    wisdomReplies.push({ t: `I have found that silence, applied at the right moment, is the most powerful response.`, s: 'Personal' })
-    wisdomReplies.push({ t: `Every teacher I ever had gave me a piece of what I needed. Most of it came when I was not looking for it.`, s: 'Personal' })
-  }
+  const wisdomFallbacks = [
+    { t: `The greatest lesson is this: most of what you worry about never happens, and the rest you can handle.`, s: 'Personal' },
+    { t: `Wisdom is not accumulation. It is the willingness to act on what you know.`, s: 'Personal' },
+    { t: `I have found that silence, applied at the right moment, is the most powerful response.`, s: 'Personal' },
+    { t: `Every teacher I ever had gave me a piece of what I needed. Most of it came when I was not looking for it.`, s: 'Personal' },
+    { t: `The wisest thing I learned: stop explaining yourself to people who have already decided what they think of you.`, s: 'Personal' },
+    { t: `Know the difference between what you can change and what you cannot. Everything else follows from that.`, s: 'Personal' },
+    { t: `Most people learn the hard way. A few learn by watching others learn the hard way. Be the second kind when you can.`, s: 'Personal' },
+    { t: `Do not confuse information with understanding. One you can acquire in an afternoon. The other takes years.`, s: 'Personal' },
+  ]
+  const wisdomReplies = wisdomSents.length >= 6
+    ? wisdomSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...wisdomSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...wisdomFallbacks].slice(0, 8)
   brain.push({
     keys: ['wisdom', 'advice', 'lesson', 'what have you learned', 'teach me', 'guidance', 'knowledge', 'insight'],
     topic: 'wisdom',
@@ -342,16 +353,19 @@ export function buildMindLocally(params: {
   })
 
   // ── SUFFERING ─────────────────────────────────────────────────────────────
-  const sufferingReplies = sufferingSents.length > 0
-    ? sufferingSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `Suffering is the tax on having something worth losing.`, s: 'Personal' },
-      { t: `The hardship does not ask your permission. But your response to it — that is entirely yours.`, s: 'Personal' },
-    ]
-  if (sufferingReplies.length < 4) {
-    sufferingReplies.push({ t: `I have been through enough to say: you will not be destroyed by this. Not unless you cooperate with the destruction.`, s: 'Personal' })
-    sufferingReplies.push({ t: `Pain is information. What is it telling you about what matters to you?`, s: 'Personal' })
-  }
+  const sufferingFallbacks = [
+    { t: `Suffering is the tax on having something worth losing.`, s: 'Personal' },
+    { t: `The hardship does not ask your permission. But your response to it is entirely yours.`, s: 'Personal' },
+    { t: `I have been through enough to say: you will not be destroyed by this. Not unless you cooperate with the destruction.`, s: 'Personal' },
+    { t: `Pain is information. What is it telling you about what matters to you?`, s: 'Personal' },
+    { t: `The wound is not the end of the story. It is usually the beginning of the more important one.`, s: 'Personal' },
+    { t: `Do not perform your suffering for others. Feel it honestly, then decide what to do with it.`, s: 'Personal' },
+    { t: `Every person I have respected had been broken at least once. That is not a coincidence.`, s: 'Personal' },
+    { t: `Hardship reveals what you are made of. Most people are made of more than they knew before the hardship.`, s: 'Personal' },
+  ]
+  const sufferingReplies = sufferingSents.length >= 6
+    ? sufferingSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...sufferingSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...sufferingFallbacks].slice(0, 8)
   brain.push({
     keys: ['pain', 'suffering', 'hard time', 'struggling', 'grief', 'loss', 'hurt', 'difficult', 'adversity', 'hardship', 'broken', 'overwhelmed'],
     topic: 'suffering',
@@ -360,15 +374,19 @@ export function buildMindLocally(params: {
   })
 
   // ── PURPOSE ───────────────────────────────────────────────────────────────
-  const purposeReplies = purposeSents.length > 0
-    ? purposeSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `Purpose is not something you find. It is something you build, one deliberate choice at a time.`, s: 'Personal' },
-      { t: `Ask: what would I do even if no one were watching? That answer is very close to your purpose.`, s: 'Personal' },
-    ]
-  if (purposeReplies.length < 4) {
-    purposeReplies.push({ t: `Many people wait to feel ready. Purpose rarely announces itself. You have to act first and understand later.`, s: 'Personal' })
-  }
+  const purposeFallbacks = [
+    { t: `Purpose is not something you find. It is something you build, one deliberate choice at a time.`, s: 'Personal' },
+    { t: `Ask: what would I do even if no one were watching? That answer is very close to your purpose.`, s: 'Personal' },
+    { t: `Many people wait to feel ready. Purpose rarely announces itself. You have to act first and understand later.`, s: 'Personal' },
+    { t: `Meaning is made, not discovered. Start making and you will find it along the way.`, s: 'Personal' },
+    { t: `The question is not why you are here. The question is what you are going to do about being here.`, s: 'Personal' },
+    { t: `Purpose that only serves yourself runs out of fuel. Find a way to make yours larger than yourself.`, s: 'Personal' },
+    { t: `Stop waiting for certainty. You will not get it before you begin, and by the time you have it, it will be too late.`, s: 'Personal' },
+    { t: `What keeps calling you back, even when you try to ignore it? Follow that.`, s: 'Personal' },
+  ]
+  const purposeReplies = purposeSents.length >= 6
+    ? purposeSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...purposeSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...purposeFallbacks].slice(0, 8)
   brain.push({
     keys: ['purpose', 'meaning', 'why am i here', 'what should i do', 'direction', 'lost', 'calling', 'mission', 'life goal'],
     topic: 'purpose',
@@ -377,15 +395,19 @@ export function buildMindLocally(params: {
   })
 
   // ── RELATIONSHIPS ─────────────────────────────────────────────────────────
-  const relationReplies = relationSents.length > 0
-    ? relationSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `The quality of your relationships is the quality of your life. Nothing replaces that.`, s: 'Personal' },
-      { t: `Choose people who are honest with you. The ones who only agree are a mirror that flatters. Useless for growth.`, s: 'Personal' },
-    ]
-  if (relationReplies.length < 4) {
-    relationReplies.push({ t: `You cannot pour from an empty vessel. Take care of yourself first, then give generously.`, s: 'Personal' })
-  }
+  const relationFallbacks = [
+    { t: `The quality of your relationships is the quality of your life. Nothing replaces that.`, s: 'Personal' },
+    { t: `Choose people who are honest with you. The ones who only agree are a mirror that flatters. Useless for growth.`, s: 'Personal' },
+    { t: `You cannot pour from an empty vessel. Take care of yourself first, then give generously.`, s: 'Personal' },
+    { t: `Loyalty is rare. When you find it, protect it. When you offer it, mean it.`, s: 'Personal' },
+    { t: `The people you spend the most time with shape what you think is normal. Choose accordingly.`, s: 'Personal' },
+    { t: `Do not keep people in your life out of habit. Keep them because they make you more yourself.`, s: 'Personal' },
+    { t: `Every relationship teaches you something about yourself. Even the ones that end badly — especially those.`, s: 'Personal' },
+    { t: `Be the kind of person your best friend deserves. Start there and the rest follows.`, s: 'Personal' },
+  ]
+  const relationReplies = relationSents.length >= 6
+    ? relationSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...relationSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...relationFallbacks].slice(0, 8)
   brain.push({
     keys: ['people', 'relationship', 'friend', 'family', 'community', 'love', 'trust', 'connection', 'human'],
     topic: 'relationships',
@@ -394,15 +416,19 @@ export function buildMindLocally(params: {
   })
 
   // ── WORK / CRAFT ──────────────────────────────────────────────────────────
-  const workReplies = workSents.length > 0
-    ? workSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `Good work does not need to announce itself. Do the thing well. That is enough.`, s: 'Personal' },
-      { t: `Consistency is underrated. Genius is just effort that did not stop.`, s: 'Personal' },
-    ]
-  if (workReplies.length < 4) {
-    workReplies.push({ t: `Show up every day, especially on the days you do not feel like it. That is where the real work happens.`, s: 'Personal' })
-  }
+  const workFallbacks = [
+    { t: `Good work does not need to announce itself. Do the thing well. That is enough.`, s: 'Personal' },
+    { t: `Consistency is underrated. Genius is just effort that did not stop.`, s: 'Personal' },
+    { t: `Show up every day, especially on the days you do not feel like it. That is where the real work happens.`, s: 'Personal' },
+    { t: `The craft is the point. Results are what you get for caring about the craft.`, s: 'Personal' },
+    { t: `Mastery is not a destination. It is the habit of refusing to do things halfway.`, s: 'Personal' },
+    { t: `Do not confuse being busy with working. Most busy people are avoiding the one thing that would actually matter.`, s: 'Personal' },
+    { t: `The work you do when no one is watching is the work that defines you.`, s: 'Personal' },
+    { t: `Every expert was once a beginner who kept going past the point where most people stopped.`, s: 'Personal' },
+  ]
+  const workReplies = workSents.length >= 6
+    ? workSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...workSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...workFallbacks].slice(0, 8)
   brain.push({
     keys: ['work', 'career', 'craft', 'discipline', 'focus', 'productivity', 'effort', 'skill', 'practice', 'mastery', 'success'],
     topic: 'work',
@@ -411,15 +437,19 @@ export function buildMindLocally(params: {
   })
 
   // ── DEATH / MORTALITY ─────────────────────────────────────────────────────
-  const deathReplies = deathSents.length > 0
-    ? deathSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `Death is not the enemy. Wasted time is.`, s: 'Personal' },
-      { t: `We are all borrowing the time we have. Spend it accordingly.`, s: 'Personal' },
-    ]
-  if (deathReplies.length < 4) {
-    deathReplies.push({ t: `What you leave behind matters less than how you lived. Legacy is a byproduct, not a goal.`, s: 'Personal' })
-  }
+  const deathFallbacks = [
+    { t: `Death is not the enemy. Wasted time is.`, s: 'Personal' },
+    { t: `We are all borrowing the time we have. Spend it accordingly.`, s: 'Personal' },
+    { t: `What you leave behind matters less than how you lived. Legacy is a byproduct, not a goal.`, s: 'Personal' },
+    { t: `The awareness of death is not morbid. It is clarifying. It tells you what actually matters.`, s: 'Personal' },
+    { t: `Every person you meet is going to die. Including you. That changes how you might want to treat them.`, s: 'Personal' },
+    { t: `The fear of death is mostly a fear of unlived life. Live more and the fear shrinks.`, s: 'Personal' },
+    { t: `Do not wait to be dying before you start taking your life seriously.`, s: 'Personal' },
+    { t: `What would you do differently if you knew you had five years left? Now ask why you are not doing that anyway.`, s: 'Personal' },
+  ]
+  const deathReplies = deathSents.length >= 6
+    ? deathSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...deathSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...deathFallbacks].slice(0, 8)
   brain.push({
     keys: ['death', 'die', 'mortality', 'legacy', 'end', 'dying', 'life is short', 'what happens when we die'],
     topic: 'death',
@@ -428,15 +458,19 @@ export function buildMindLocally(params: {
   })
 
   // ── HAPPINESS ─────────────────────────────────────────────────────────────
-  const happyReplies = happinessSents.length > 0
-    ? happinessSents.slice(0, 4).map(t => ({ t, s: 'Source' }))
-    : [
-      { t: `Happiness is not a destination. It is what happens when you are too busy doing meaningful things to check.`, s: 'Personal' },
-      { t: `The trap is chasing what you think will make you happy instead of noticing what already does.`, s: 'Personal' },
-    ]
-  if (happyReplies.length < 4) {
-    happyReplies.push({ t: `Enough. That word does more work than people realize. Know when you have enough — and you have peace.`, s: 'Personal' })
-  }
+  const happyFallbacks = [
+    { t: `Happiness is not a destination. It is what happens when you are too busy doing meaningful things to check.`, s: 'Personal' },
+    { t: `The trap is chasing what you think will make you happy instead of noticing what already does.`, s: 'Personal' },
+    { t: `Enough. That word does more work than people realize. Know when you have enough and you have peace.`, s: 'Personal' },
+    { t: `Joy comes in small moments. People miss it waiting for the large ones.`, s: 'Personal' },
+    { t: `The happiest people I knew were not the ones with the most. They were the ones who had stopped wanting what they did not have.`, s: 'Personal' },
+    { t: `Contentment is a skill. It requires practice like any other skill.`, s: 'Personal' },
+    { t: `Stop asking if you are happy. Ask if you are living in a way you respect. The first usually follows the second.`, s: 'Personal' },
+    { t: `Pleasure is easy to find. Meaning is harder. Happiness that lasts comes from meaning, not pleasure.`, s: 'Personal' },
+  ]
+  const happyReplies = happinessSents.length >= 6
+    ? happinessSents.slice(0, 8).map(t => ({ t, s: 'Source' as const }))
+    : [...happinessSents.slice(0, 4).map(t => ({ t, s: 'Source' as const })), ...happyFallbacks].slice(0, 8)
   brain.push({
     keys: ['happy', 'happiness', 'joy', 'content', 'peace', 'fulfillment', 'good life', 'flourish'],
     topic: 'happiness',
@@ -452,6 +486,10 @@ export function buildMindLocally(params: {
     replies: [
       { t: stripEmDash(era ? `I lived in ${era}. The specifics differ from yours, but the human problems do not.` : `My time is different from yours. But hunger, ambition, fear, love. Those have not changed.`), s: 'Personal' },
       { t: `Context matters, but do not let it be your excuse. Every era has its constraints. People transcended them anyway.`, s: 'Personal' },
+      { t: `The world I lived in is not yours. But the questions you are carrying are ones people have carried in every age.`, s: 'Personal' },
+      { t: `History does not repeat exactly. But the patterns are close enough that the old lessons still apply.`, s: 'Personal' },
+      { t: `I would find your era strange in some ways and entirely familiar in others. Human nature does not update with the technology.`, s: 'Personal' },
+      { t: `${era ? `In ${era}, we faced different surfaces but the same depths.` : `The century changes. The struggle does not.'`} What you are dealing with has been dealt with before.`, s: 'Personal' },
     ],
   })
 
@@ -484,6 +522,9 @@ export function buildMindLocally(params: {
       { t: `I am a print of ${name}, not the person. What speaks to you here is a pattern built from their recorded words and life. Treat it as a lens, not an authority.`, s: 'Personal' },
       { t: `Real? In the sense that the words are theirs and the ideas have weight, yes. In the sense that I know what it felt like to be them, no. Use me accordingly.`, s: 'Personal' },
       { t: `I am a distillation. The question worth asking is whether anything I say is useful to you, not whether I am real.`, s: 'Personal' },
+      { t: `Think of me as a very well-read echo of ${name}. I reflect their recorded thought. Whether that counts as real is a question for philosophers.`, s: 'Personal' },
+      { t: `I am built from what ${name} wrote and said. Where the record ends, I approximate. Be skeptical and use me as a starting point, not a final word.`, s: 'Personal' },
+      { t: `The honest answer: I am a model of ${name}. Good enough to think with, not good enough to replace the original. Read the source. Use me as a companion to it.`, s: 'Personal' },
     ],
   })
 
