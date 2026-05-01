@@ -9,7 +9,7 @@
  * (private browsing, Brave shields, Safari ITP, storage quota exceeded).
  */
 import { openDB, type IDBPDatabase } from 'idb'
-import { RAG } from './config'
+const RAG = { TOP_K: 6, MIN_SCORE: 0.25 }
 
 export interface VectorChunk {
   id: string

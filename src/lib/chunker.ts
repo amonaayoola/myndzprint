@@ -13,9 +13,8 @@ export interface TextChunk {
   sourceType: 'corpus'
 }
 
-import { RAG } from './config'
-const TARGET_CHUNK_TOKENS = RAG.CHUNK_TOKENS
-const OVERLAP_TOKENS = RAG.OVERLAP_TOKENS
+const TARGET_CHUNK_TOKENS = 120  // ~120 words per chunk
+const OVERLAP_TOKENS = 20        // ~20 word overlap between chunks
 
 function roughTokenCount(text: string): number {
   return text.split(/\s+/).length
