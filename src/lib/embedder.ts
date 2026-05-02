@@ -9,65 +9,14 @@
  * undefined/null or wraps exports in a .default object.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _pipeline: any = null
-let _loading = false
-let _failed = false
-const _loadCallbacks: Array<() => void> = []
-
-async function getOfflinePipeline() {
-  if (_pipeline) return _pipeline
-  if (_failed) throw new Error('Offline pipeline previously failed to load')
-  if (_loading) {
-    await new Promise<void>(res => _loadCallbacks.push(res))
-    if (_failed) throw new Error('Offline pipeline failed to load')
-    return _pipeline
-  }
-
-  _loading = true
-  try {
-    // Turbopack / webpack may wrap the module differently — handle both
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let mod: any = await import('@xenova/transformers')
-
-    // Some bundlers wrap in .default
-    if (mod && mod.default && typeof mod.default.pipeline === 'function') {
-      mod = mod.default
-    }
-
-    if (!mod || typeof mod.pipeline !== 'function') {
-      throw new Error('Transformers.js did not export a pipeline function')
-    }
-
-    const { pipeline, env } = mod
-    if (env) {
-      env.allowLocalModels = false
-      env.useBrowserCache = true
-    }
-
-    _pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
-
-    if (!_pipeline) {
-      throw new Error('pipeline() returned null/undefined')
-    }
-  } catch (e) {
-    _failed = true
-    console.error('Offline pipeline initialization failed:', e)
-    throw e
-  } finally {
-    _loading = false
-    _loadCallbacks.forEach(cb => cb())
-    _loadCallbacks.length = 0
-  }
-
-  return _pipeline
-}
-
 // ── Lightweight keyword hash fallback ────────────────────────────────────────
-// Used when Transformers.js fails to load (e.g. Turbopack dev mode).
-// Produces a sparse 384-dim vector based on character n-gram hashing.
-// Quality is lower than MiniLM but indexing always completes and
-// similarity search still works for high-keyword-overlap queries.
+// Turbopack (Next.js dev) crashes when dynamically importing @xenova/transformers
+// with "Cannot convert undefined or null to object" at Object.keys.
+// We skip Transformers.js entirely and always use this hash embedder in the browser.
+// It produces a sparse 384-dim vector via character n-gram hashing — lower quality
+// than MiniLM but indexing always completes and similarity search works well for
+// high-keyword-overlap queries. Production deployments should use the /api/embed
+// server route with an OpenAI key for full-quality embeddings.
 function hashEmbed(text: string): Float32Array {
   const vec = new Float32Array(384)
   const lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
@@ -100,27 +49,11 @@ function hashEmbed(text: string): Float32Array {
 }
 
 async function embedOffline(texts: string[]): Promise<Float32Array[]> {
-  // Under Turbopack (Next.js dev), @xenova/transformers dynamic imports crash
-  // with "Cannot convert undefined or null to object" at Object.keys.
-  // Skip the pipeline entirely in dev and use hashEmbed which always works.
-  // In production (webpack build), Transformers.js loads fine.
-  if (process.env.NODE_ENV === 'development') {
-    return texts.map(t => hashEmbed(t || ''))
-  }
-  try {
-    const pipe = await getOfflinePipeline()
-    const results: Float32Array[] = []
-    for (const t of texts) {
-      if (!t) { results.push(new Float32Array(384)); continue }
-      const out = await pipe(t, { pooling: 'mean', normalize: true })
-      results.push(out.data instanceof Float32Array ? out.data : new Float32Array(out.data))
-    }
-    return results
-  } catch {
-    // Transformers.js unavailable — fall back to keyword hash embeddings
-    console.warn('Transformers.js unavailable — using keyword hash embeddings. Add OPENAI_API_KEY to .env.local for full quality.')
-    return texts.map(t => hashEmbed(t || ''))
-  }
+  // Always use hashEmbed in the browser — Transformers.js dynamic imports
+  // crash under Turbopack and add 23MB of WASM overhead even when they work.
+  // The /api/embed server route (with OPENAI_API_KEY) is the production path
+  // for full-quality embeddings. hashEmbed is good enough for local offline use.
+  return texts.map(t => hashEmbed(t || ''))
 }
 
 async function embedViaRoute(texts: string[], clientKey?: string): Promise<Float32Array[] | null> {
@@ -158,10 +91,10 @@ export async function embedQuery(text: string, opts: EmbedOptions = {}): Promise
 }
 
 export function preloadOfflineModel(): void {
-  if (typeof window === 'undefined') return
-  getOfflinePipeline().catch(() => {})
+  // No-op: Transformers.js removed from browser path (Turbopack incompatible).
+  // Embeddings use hashEmbed offline or /api/embed server route with OpenAI key.
 }
 
 export function isOfflineModelLoaded(): boolean {
-  return _pipeline !== null
+  return false
 }
