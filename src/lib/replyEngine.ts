@@ -304,8 +304,50 @@ export interface ReplyResult {
   engine: 'local' | 'llm'
 }
 
+// ── SHORT-QUERY INTERCEPTORS ──────────────────────────────────────────────────
+const GREETING_PATTERNS = /^(hi|hey|hello|greetings|good (morning|evening|day|afternoon)|yo|sup|howdy|hiya|salute|ave|hail)[\s!.?]*$/i
+const IDENTITY_PATTERNS = /^(who are you|what are you|who r u|who is this|are you real|are you alive|tell me about yourself|introduce yourself|what is your name|whats your name|what's your name)[\s!.?]*$/i
+
+function matchByCategory(mind: Mind, category: 'greeting' | 'identity', ctx: ReplyContext): BrainReply | null {
+  if (!mind.brain) return null
+  // Look for brain entries tagged with the right keys
+  const greetingKeys = category === 'greeting'
+    ? ['hello', 'hi', 'greeting', 'greet', 'salute', 'welcome']
+    : ['who are you', 'identity', 'who am i talking to', 'are you real', 'introduce yourself', 'tell me about yourself']
+
+  const entry = mind.brain.find(e =>
+    e.keys[0] !== '__redirect__' && e.keys.some(k => greetingKeys.includes(k.toLowerCase()))
+  )
+  if (!entry) return null
+
+  const entryIdx = mind.brain.indexOf(entry)
+  const used = ctx.repliesUsed[entryIdx] || []
+  if (used.length >= entry.replies.length) ctx.repliesUsed[entryIdx] = []
+
+  const unusedIndices = entry.replies.map((_, i) => i).filter(i => !(ctx.repliesUsed[entryIdx] || []).includes(i))
+  const pickIdx = unusedIndices.length > 0
+    ? unusedIndices[Math.floor(Math.random() * unusedIndices.length)]
+    : Math.floor(Math.random() * entry.replies.length)
+
+  ctx.repliesUsed[entryIdx] = [...(ctx.repliesUsed[entryIdx] || []), pickIdx]
+  return entry.replies[pickIdx]
+}
+
 export function localReply(mind: Mind, message: string, history: Message[]): ReplyResult {
   const ctx = contextFromHistory(history, mind)
+  const trimmed = message.trim()
+
+  // Intercept greetings before keyword scoring — short messages score 0 on all topics
+  if (GREETING_PATTERNS.test(trimmed)) {
+    const greet = matchByCategory(mind, 'greeting', ctx)
+    if (greet) return { reply: greet.t, source: greet.s, engine: 'local' }
+  }
+
+  // Intercept identity questions
+  if (IDENTITY_PATTERNS.test(trimmed)) {
+    const id = matchByCategory(mind, 'identity', ctx)
+    if (id) return { reply: id.t, source: id.s, engine: 'local' }
+  }
 
   const match = matchLocalBrain(mind, message, ctx)
   if (match) return { reply: match.t, source: match.s, engine: 'local' }
