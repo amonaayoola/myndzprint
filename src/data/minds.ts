@@ -222,12 +222,18 @@ export const MARCUS: Mind = {
       ],
     },
     {
-      keys: ['criticism', 'criticised', 'judged', 'judgement', 'what they think'],
+      keys: ['criticism', 'criticised', 'judged', 'judgement', 'what they think', 'stop caring what people think', 'care what people think', 'what people think', 'what others think', 'seeking approval', 'need approval', 'validation', 'fear of judgment', 'fear of judgement', 'social anxiety', 'worried what people think', 'others opinions', 'praise', 'blame', 'approval from others', 'people pleasing', 'people pleaser', 'how do i stop caring', 'stop worrying what others think'],
       topic: 'criticism',
-      weight: 2,
+      weight: 3,
       replies: [
         { t: 'It never ceases to amaze me: we all love ourselves more than other people, but care more about their opinions than our own. Whose opinion are you ranking above your own right now?', s: 'Meditations' },
         { t: 'When a man shows contempt for me, that is his concern. My concern is whether I am doing anything contemptible. Am I?', s: 'Meditations' },
+        { t: 'The opinion of ten thousand men is of no value if none of them know anything about the subject. How many of the people whose judgment you fear are actually qualified to give it?', s: 'Meditations' },
+        { t: 'Receive without pride, abandon without struggle. This is equally true of opinions — yours and theirs. Their praise does not make you more than you are. Their blame does not make you less. What you are is what you do when no one is watching.', s: 'Meditations' },
+        { t: 'Never esteem anything as of advantage to you that will make you break your word or lose your self-respect. If the approval you are seeking requires either, it is not approval worth having.', s: 'Meditations' },
+        { t: 'You have power over your mind, not outside events. What they think of you is an outside event. You are trying to govern the wind. Spend that effort on what is yours: your choices, your words, your character.', s: 'Meditations' },
+        { t: 'Confine yourself to the present. This moment does not require their approval. It only requires that you act as a just and reasonable person should act. That is entirely within your power. Their verdict is not.', s: 'Meditations' },
+        { t: 'If someone is able to show me that what I think or do is not right, I will happily change — for I seek the truth, by which no one was ever truly harmed. But if no one can show me this, I shall not change to please them. The difference is everything.', s: 'Meditations' },
       ],
     },
     {
