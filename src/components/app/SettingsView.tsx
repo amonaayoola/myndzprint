@@ -98,7 +98,7 @@ export default function SettingsView() {
     try {
       const { reIndexMind } = await import('@/lib/indexer')
       const count = await reIndexMind(mind, {})
-      showToast(`Re-indexed ${mind.name} — ${count} chunks.`)
+      showToast(`Re-indexed ${mind.name}. ${count} chunks.`)
       await loadIndexInfo()
     } catch (e) {
       showToast('Indexing failed. Check console.')
@@ -199,10 +199,10 @@ export default function SettingsView() {
         <div className="settings-section">
           <div className="settings-label">Account</div>
           <div className="settings-row">
-            <div><div className="t">Name</div><div className="s">{user?.name ?? '—'}</div></div>
+            <div><div className="t">Name</div><div className="s">{user?.name ?? ''}</div></div>
           </div>
           <div className="settings-row">
-            <div><div className="t">Email</div><div className="s">{user?.email ?? '—'}</div></div>
+            <div><div className="t">Email</div><div className="s">{user?.email ?? ''}</div></div>
           </div>
         </div>
 
@@ -301,7 +301,7 @@ export default function SettingsView() {
           <div className="settings-row">
             <div style={{ flex: 1 }}>
               <div className="s" style={{ fontSize: 12, lineHeight: 1.6 }}>
-                Sent through your server only — never directly from the browser.
+                Sent through your server only, never directly from the browser.
                 Get a key at{' '}
                 <a href={keyLink[provider]} target="_blank" rel="noreferrer" style={{ color: 'var(--gold)' }}>
                   {keyLink[provider].replace('https://', '')}
@@ -344,7 +344,7 @@ export default function SettingsView() {
               <div style={{ flex: 1 }}>
                 <div className="t">Claude (Anthropic)</div>
                 <div className="s" style={{ fontSize: 12 }}>
-                  {serverStatus.anthropicConfigured ? `Configured — ${serverStatus.model}` : 'Not configured — using personal key'}
+                  {serverStatus.anthropicConfigured ? `Configured. ${serverStatus.model}` : 'Not configured, using personal key'}
                 </div>
               </div>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: serverStatus.anthropicConfigured ? 'var(--green)' : 'var(--text3)', flexShrink: 0, marginTop: 4 }} />
@@ -353,7 +353,7 @@ export default function SettingsView() {
               <div style={{ flex: 1 }}>
                 <div className="t">OpenAI (embeddings)</div>
                 <div className="s" style={{ fontSize: 12 }}>
-                  {serverStatus.openaiConfigured ? 'Configured — text-embedding-3-small' : 'Not configured — keyword hash fallback active'}
+                  {serverStatus.openaiConfigured ? 'Configured. text-embedding-3-small' : 'Not configured, keyword hash fallback active'}
                 </div>
               </div>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: serverStatus.openaiConfigured ? 'var(--green)' : 'var(--gold)', flexShrink: 0, marginTop: 4 }} />
@@ -504,7 +504,7 @@ export default function SettingsView() {
               {/* Email */}
               <input
                 className="form-input"
-                placeholder="Your email (optional — only if you want a reply)"
+                placeholder="Your email (optional, only if you want a reply)"
                 value={feedbackEmail}
                 onChange={e => setFeedbackEmail(e.target.value)}
                 style={{ fontSize: 13 }}

@@ -125,10 +125,10 @@ export default function BuildModal() {
                 Source material
                 <span style={{ color: 'var(--gold)', fontSize: 12, marginLeft: 8 }}>powers smart replies</span>
               </div>
-              <textarea className="modal-textarea" rows={6} placeholder="Paste letters, writings, speeches, diary entries, interviews — anything in their voice. The more you add, the better the mind." value={sourceText} onChange={e => setSourceText(e.target.value)} />
+              <textarea className="modal-textarea" rows={6} placeholder="Paste letters, writings, speeches, diary entries, interviews, anything in their voice. The more you add, the better the mind." value={sourceText} onChange={e => setSourceText(e.target.value)} />
               <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: apiKey ? 'rgba(184,137,42,0.07)' : 'var(--bg2)', border: '1px solid var(--border)', fontSize: 13 }}>
                 <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                  {apiKey ? '⚡ API path — Claude generates + semantic search' : '◉ Offline path — semantic search over your material'}
+                  {apiKey ? '⚡ API path. Claude generates + semantic search' : '◉ Offline path. Semantic search over your material'}
                 </div>
                 <div style={{ color: 'var(--text2)', lineHeight: 1.6 }}>
                   {apiKey

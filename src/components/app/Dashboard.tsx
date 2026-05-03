@@ -26,15 +26,15 @@ export default function Dashboard() {
 
         <div className="stats-grid">
           <div className="stat">
-            <div className="num" id="stat-mymind">{interactedMinds.length || '—'}</div>
+            <div className="num" id="stat-mymind">{interactedMinds.length || '0'}</div>
             <div className="label">My minds</div>
           </div>
           <div className="stat">
-            <div className="num" id="stat-conv">{convCount || '—'}</div>
+            <div className="num" id="stat-conv">{convCount || '0'}</div>
             <div className="label">Conversations</div>
           </div>
           <div className="stat">
-            <div className="num" id="stat-msgs">{totalMsgs || '—'}</div>
+            <div className="num" id="stat-msgs">{totalMsgs || '0'}</div>
             <div className="label">Messages sent</div>
           </div>
         </div>

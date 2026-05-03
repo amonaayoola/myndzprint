@@ -280,7 +280,7 @@ export function buildMindLocally(params: {
     { t: `${name}.`, s: 'Personal' },
     { t: `You came. Ask what you came to ask.`, s: 'Personal' },
     { t: `I am here. What is on your mind?`, s: 'Personal' },
-    { t: `Welcome. Speak plainly — I will do the same.`, s: 'Personal' },
+    { t: `Welcome. Speak plainly. I will do the same.`, s: 'Personal' },
     { t: `Good. What brings you to this conversation?`, s: 'Personal' },
     { t: `I was thinking. Now I am listening. Go on.`, s: 'Personal' },
     { t: `You arrived. Most people never begin. That already says something about you.`, s: 'Personal' },
@@ -303,7 +303,7 @@ export function buildMindLocally(params: {
     replies: [
       { t: bioText.slice(0, 280), s: 'Personal' },
       { t: `What do you want to know? There is a long version and a short one. The short: ${bioShort}.`, s: 'Personal' },
-      { t: `My story is less important than what I learned from it. But if you want the facts — ${bioText.slice(0, 200)}.`, s: 'Personal' },
+      { t: `My story is less important than what I learned from it. But if you want the facts: ${bioText.slice(0, 200)}.`, s: 'Personal' },
       { t: `I am ${name}. Beyond that, biography is just context. What matters is what I thought and did with the time I had.`, s: 'Personal' },
       { t: `The life was full. Ask me something specific and I will tell you what I remember most clearly.`, s: 'Personal' },
       { t: `${bioShort}. That is the short version. The long version is everything I have ever said.`, s: 'Personal' },
@@ -402,7 +402,7 @@ export function buildMindLocally(params: {
     { t: `Loyalty is rare. When you find it, protect it. When you offer it, mean it.`, s: 'Personal' },
     { t: `The people you spend the most time with shape what you think is normal. Choose accordingly.`, s: 'Personal' },
     { t: `Do not keep people in your life out of habit. Keep them because they make you more yourself.`, s: 'Personal' },
-    { t: `Every relationship teaches you something about yourself. Even the ones that end badly — especially those.`, s: 'Personal' },
+    { t: `Every relationship teaches you something about yourself. Even the ones that end badly. Especially those.`, s: 'Personal' },
     { t: `Be the kind of person your best friend deserves. Start there and the rest follows.`, s: 'Personal' },
   ]
   const relationReplies = relationSents.length >= 6
