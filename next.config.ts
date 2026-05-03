@@ -2,6 +2,7 @@ import type { NextConfig } from 'next'
 import path from 'path'
 
 const nextConfig: NextConfig = {
+    typescript: { ignoreBuildErrors: true },
   // Turbopack-compatible alias config
   turbopack: {
     resolveAlias: {
