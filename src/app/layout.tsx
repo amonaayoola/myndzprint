@@ -5,7 +5,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 
 export const metadata: Metadata = {
   title: 'Myndzprint. Any mind. Any time. Any place.',
-  description: 'The thinkers who shaped you, reachable whenever you need them.',
+  description: 'The thinkers who shaped you — reachable whenever you need them.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

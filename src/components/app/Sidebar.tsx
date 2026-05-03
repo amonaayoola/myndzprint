@@ -38,8 +38,8 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sb-head">
         <Logo size={20} />
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, letterSpacing: '0.05em', color: 'var(--text)', lineHeight: 1, whiteSpace: 'nowrap', minWidth: 0, flexShrink: 0 }}>
-          myndz<span style={{ color: 'var(--gold)' }}>print</span>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, letterSpacing: '0.05em', color: 'var(--text)', lineHeight: 1 }}>
+          Myndz<span style={{ color: 'var(--gold)' }}>print</span>
         </div>
       </div>
 

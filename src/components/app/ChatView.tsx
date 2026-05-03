@@ -10,7 +10,7 @@ import type { Message } from '@/types'
 const TIER_LABELS: Record<ReplyTier, { label: string; title: string }> = {
   'api-rag':          { label: '⚡ AI · grounded',  title: 'Claude generation grounded in uploaded material' },
   'offline-rag':      { label: '◉ offline · smart', title: 'Semantic search over uploaded material (no API key needed)' },
-  'offline-fallback': { label: '○ offline · basic',  title: 'Keyword matching. Add source material for better replies.' },
+  'offline-fallback': { label: '○ offline · basic',  title: 'Keyword matching — add source material for better replies' },
 }
 
 function TypingDots() {
