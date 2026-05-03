@@ -103,6 +103,53 @@ function scoreEntry(entry: { keys: string[]; weight?: number }, lower: string): 
 }
 
 // ── BRAIN MATCHING ────────────────────────────────────────────────────────────
+
+/** For short queries that score nothing, fall back to the greeting or identity topic entry */
+function shortQueryFallback(mind: Mind, message: string, ctx: ReplyContext): BrainReply | null {
+  if (!mind.brain) return null
+  const wordCount = message.trim().split(/\s+/).length
+  if (wordCount >= 5) return null
+
+  const lower = message.toLowerCase().trim()
+
+  // Greeting words → greeting topic
+  const greetingWords = new Set(['hi', 'hey', 'hello', 'hiya', 'howdy', 'sup', 'yo', 'greetings'])
+  const firstWord = lower.split(/\s+/)[0]
+  if (greetingWords.has(firstWord) || greetingWords.has(lower)) {
+    const greetingIdx = mind.brain.findIndex(e => e.topic === 'greeting')
+    if (greetingIdx !== -1) {
+      const entry = mind.brain[greetingIdx]
+      if (entry.replies.length > 0) {
+        const used = ctx.repliesUsed[greetingIdx] || []
+        if (used.length >= entry.replies.length) ctx.repliesUsed[greetingIdx] = []
+        const unused = entry.replies.map((_, i) => i).filter(i => !(ctx.repliesUsed[greetingIdx] || []).includes(i))
+        const pickIdx = unused.length > 0 ? unused[Math.floor(Math.random() * unused.length)] : Math.floor(Math.random() * entry.replies.length)
+        ctx.repliesUsed[greetingIdx] = [...(ctx.repliesUsed[greetingIdx] || []), pickIdx]
+        return entry.replies[pickIdx]
+      }
+    }
+  }
+
+  // "who/what are you" type questions → identity topic
+  const identityPhrases = ['who are you', 'what are you', 'who is this', 'what is this', 'who am i talking']
+  if (identityPhrases.some(p => lower.includes(p))) {
+    const identityIdx = mind.brain.findIndex(e => e.topic === 'identity')
+    if (identityIdx !== -1) {
+      const entry = mind.brain[identityIdx]
+      if (entry.replies.length > 0) {
+        const used = ctx.repliesUsed[identityIdx] || []
+        if (used.length >= entry.replies.length) ctx.repliesUsed[identityIdx] = []
+        const unused = entry.replies.map((_, i) => i).filter(i => !(ctx.repliesUsed[identityIdx] || []).includes(i))
+        const pickIdx = unused.length > 0 ? unused[Math.floor(Math.random() * unused.length)] : Math.floor(Math.random() * entry.replies.length)
+        ctx.repliesUsed[identityIdx] = [...(ctx.repliesUsed[identityIdx] || []), pickIdx]
+        return entry.replies[pickIdx]
+      }
+    }
+  }
+
+  return null
+}
+
 function matchLocalBrain(mind: Mind, message: string, ctx: ReplyContext): BrainReply | null {
   if (!mind.brain || mind.brain.length === 0) return null
   const lower = ' ' + message.toLowerCase().replace(/[,.!?;:'"()\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim() + ' '
@@ -114,7 +161,13 @@ function matchLocalBrain(mind: Mind, message: string, ctx: ReplyContext): BrainR
     const score = scoreEntry(entry, lower)
     if (score > 0) scored.push({ entryIdx: idx, score })
   })
-  if (scored.length === 0) return null
+
+  // Short queries that matched nothing — try topic-based fallback before giving up
+  if (scored.length === 0) {
+    const shortFallback = shortQueryFallback(mind, message, ctx)
+    if (shortFallback) return shortFallback
+    return null
+  }
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
