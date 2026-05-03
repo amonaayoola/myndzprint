@@ -17,7 +17,7 @@
  * yields too few candidates.
  */
 import { embedQuery, type EmbedOptions } from './embedder'
-import { getChunksForMind, topK, hasChunks } from './vectorStore'
+import { getChunksForMind, topK, hasChunks, querySupabase, hasChunksInSupabase, isSupabaseAvailable } from './vectorStore'
 import { localReply, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
@@ -96,11 +96,18 @@ async function tier1Generation(
   embedOpts: EmbedOptions
 ): Promise<ReplyResult> {
   const queryVec = await embedQuery(userMessage, embedOpts)
-  const allChunks = await getChunksForMind(mind.id)
-
-  // TagRAG: detect intent and filter by labels before scoring
   const intent = detectIntent(userMessage)
-  const relevant = deduplicateChunks(topK(queryVec, allChunks, 5, intent))
+
+  // Use Supabase pgvector when available (faster, server-side similarity search)
+  // Fall back to local IndexedDB + cosine scoring
+  let relevant: Awaited<ReturnType<typeof getChunksForMind>>
+  const sbAvailable = await isSupabaseAvailable()
+  if (sbAvailable) {
+    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 5, intent.topicLabel))
+  } else {
+    const allChunks = await getChunksForMind(mind.id)
+    relevant = deduplicateChunks(topK(queryVec, allChunks, 5, intent))
+  }
 
   const context = relevant.map(c => c.text).join('\n\n')
 
@@ -204,7 +211,13 @@ export async function ragReply(
   provider = 'anthropic',
   model = 'claude-haiku-4-5-20251001'
 ): Promise<ReplyResult> {
-  const indexed = await hasChunks(mind.id)
+  // Check both IndexedDB and Supabase for indexed content
+  const [localIndexed, sbAvailable, sbIndexed] = await Promise.all([
+    hasChunks(mind.id),
+    isSupabaseAvailable(),
+    isSupabaseAvailable().then(avail => avail ? hasChunksInSupabase(mind.id) : false),
+  ])
+  const indexed = localIndexed || sbIndexed
 
   if (apiKey && indexed) {
     try {

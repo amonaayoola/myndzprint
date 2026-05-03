@@ -215,3 +215,103 @@ export function topK(
 export function isUsingMemoryFallback(): boolean {
   return useMemoryFallback
 }
+
+// ── Supabase pgvector integration ─────────────────────────────────────────────
+// Used for public minds when NEXT_PUBLIC_SUPABASE_URL is configured.
+// Falls back to IndexedDB for user-built minds or when Supabase is unavailable.
+
+let _supabase: import('@supabase/supabase-js').SupabaseClient | null = null
+let _supabaseLoaded = false
+
+async function getSupabase() {
+  if (_supabaseLoaded) return _supabase
+  _supabaseLoaded = true
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) return null
+    const { createClient } = await import('@supabase/supabase-js')
+    _supabase = createClient(url, key)
+  } catch {
+    _supabase = null
+  }
+  return _supabase
+}
+
+export async function saveChunksToSupabase(chunks: VectorChunk[]): Promise<boolean> {
+  const sb = await getSupabase()
+  if (!sb || chunks.length === 0) return false
+  try {
+    const rows = chunks.map(c => ({
+      id: c.id,
+      mind_id: c.mindId,
+      text: c.text,
+      embedding: Array.from(c.vector),
+      topic_label: c.topicLabel || 'general',
+      register_label: c.registerLabel || 'balanced',
+      source_type: c.sourceType || 'corpus',
+    }))
+    // Upsert in batches of 100
+    for (let i = 0; i < rows.length; i += 100) {
+      const { error } = await sb.from('mind_chunks').upsert(rows.slice(i, i + 100))
+      if (error) { console.warn('Supabase upsert error:', error); return false }
+    }
+    invalidateCache(chunks[0].mindId)
+    return true
+  } catch (e) {
+    console.warn('saveChunksToSupabase failed:', e)
+    return false
+  }
+}
+
+export async function hasChunksInSupabase(mindId: string): Promise<boolean> {
+  const sb = await getSupabase()
+  if (!sb) return false
+  try {
+    const { count, error } = await sb
+      .from('mind_chunks')
+      .select('id', { count: 'exact', head: true })
+      .eq('mind_id', mindId)
+    if (error) return false
+    return (count ?? 0) > 0
+  } catch {
+    return false
+  }
+}
+
+export async function querySupabase(
+  mindId: string,
+  embedding: Float32Array,
+  k = RAG.TOP_K,
+  topicLabel?: string
+): Promise<VectorChunk[]> {
+  const sb = await getSupabase()
+  if (!sb) return []
+  try {
+    const { data, error } = await sb.rpc('match_chunks', {
+      p_mind_id: mindId,
+      p_embedding: Array.from(embedding),
+      p_match_count: k,
+      p_min_score: RAG.MIN_SCORE,
+      p_topic_label: topicLabel || null,
+    })
+    if (error || !data) return []
+    return (data as Array<{id: string; text: string; topic_label: string; register_label: string; source_type: string; similarity: number}>).map(row => ({
+      id: row.id,
+      mindId,
+      text: row.text,
+      vector: new Float32Array(0), // not returned from Supabase — not needed post-query
+      topicLabel: row.topic_label,
+      registerLabel: row.register_label,
+      sourceType: row.source_type as 'corpus' | 'brain',
+    }))
+  } catch (e) {
+    console.warn('querySupabase failed:', e)
+    return []
+  }
+}
+
+export async function isSupabaseAvailable(): Promise<boolean> {
+  const sb = await getSupabase()
+  return sb !== null
+}

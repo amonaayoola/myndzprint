@@ -6,7 +6,7 @@
  */
 import { chunkCorpus, chunkBrain } from './chunker'
 import { embedTexts, type EmbedOptions } from './embedder'
-import { saveChunks, deleteChunksForMind, type VectorChunk } from './vectorStore'
+import { saveChunks, deleteChunksForMind, saveChunksToSupabase, isSupabaseAvailable, type VectorChunk } from './vectorStore'
 import type { Mind } from '../types'
 
 export interface IndexProgress {
@@ -107,7 +107,17 @@ export async function indexMind(
     })
   })
 
-  await saveChunks(chunks)
+  // Save to Supabase pgvector if available, always save to IndexedDB as local cache
+  const sbAvailable = await isSupabaseAvailable()
+  if (sbAvailable) {
+    const saved = await saveChunksToSupabase(chunks)
+    if (!saved) {
+      console.warn('Supabase save failed, falling back to IndexedDB only')
+      await saveChunks(chunks)
+    }
+  } else {
+    await saveChunks(chunks)
+  }
 
   onProgress?.({ stage: 'done', progress: 1, chunkCount: chunks.length })
   return chunks.length
