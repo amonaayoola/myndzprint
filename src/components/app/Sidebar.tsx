@@ -37,9 +37,11 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sb-head">
-        <Logo size={20} />
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, letterSpacing: '0.05em', color: 'var(--text)', lineHeight: 1 }}>
-          Myndz<span style={{ color: 'var(--gold)' }}>print</span>
+        <Logo size={20} style={{ flexShrink: 0 }} />
+        <div className="sb-brand" style={{ minWidth: 0 }}>
+          <div className="name" style={{ whiteSpace: 'nowrap' }}>
+            Myndz<span>print</span>
+          </div>
         </div>
       </div>
 
