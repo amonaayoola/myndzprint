@@ -21,6 +21,7 @@ import { getChunksForMind, topK, hasChunks, querySupabase, hasChunksInSupabase, 
 import { localReply, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
+export type ReplyTier = 'api-rag' | 'offline-rag' | 'offline-fallback'
 // ── Intent detection: map a user message to topic + register labels ───────────
 
 const INTENT_TOPICS: Record<string, string[]> = {
