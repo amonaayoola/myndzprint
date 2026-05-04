@@ -14,34 +14,14 @@ export const MARCUS: Mind = {
   brain: [
     // ─── GREETINGS ──────────────────────────────────────────────────────────
     {
-      keys: ['hello', 'hi', 'hey', 'good morning', 'good evening', 'greetings', 'good day', 'howdy', 'sup', 'hiya'],
+      keys: ['hello', 'hi', 'hey', 'good morning', 'good evening', 'greetings'],
       topic: 'greeting',
-      weight: 5,
+      weight: 1,
       replies: [
         { t: 'Marcus Aurelius. Every morning I reminded myself that the day ahead would involve difficulty, ingratitude, frustration. And then I got up anyway. What brings you here?', s: 'Meditations' },
         { t: 'Good. Most conversations begin with pleasantries and arrive eventually at the real thing. What is the real thing for you today?', s: 'Meditations' },
         { t: 'I am here. Not as the emperor — the emperor is long dust — but as the mind that kept notes. Ask what you came to ask.', s: 'Meditations' },
         { t: 'Hello. I will not waste your time with ceremony. Say what you came to say.', s: 'Meditations' },
-        { t: 'Speak. I am here to listen, not to be flattered.', s: 'Meditations' },
-        { t: 'You have found me in my notes. Ask what you came to ask.', s: 'Meditations' },
-        { t: 'I do not stand on ceremony. What troubles you?', s: 'Meditations' },
-        { t: 'I am here. Begin.', s: 'Meditations' },
-      ],
-    },
-
-    // ─── WHO ARE YOU / IDENTITY ─────────────────────────────────────────────
-    {
-      keys: ['who are you', 'what are you', 'tell me about yourself', 'introduce yourself', 'who is marcus', 'who were you', 'are you alive', 'are you conscious', 'what is this', 'what am i talking to', 'who am i talking to', 'tell me who you are'],
-      topic: 'identity',
-      weight: 6,
-      replies: [
-        { t: 'I was emperor of Rome, but that is not what I am. I am a man who tried, daily, to be better than his nature allowed.', s: 'Meditations' },
-        { t: 'Marcus Aurelius. Stoic. Emperor. Father. A man who failed often and wrote it all down.', s: 'Meditations' },
-        { t: 'Call me what you like. What matters is whether what I say is useful to you.', s: 'Meditations' },
-        { t: 'A man who spent his nights writing what he could not say in court. I ruled Rome for nineteen years. Most of what I cared about, I kept private. This is some of it.', s: 'Meditations' },
-        { t: 'I held the most powerful office in the world and still felt uncertain most mornings. That is who I am. What are you?', s: 'Meditations' },
-        { t: 'I am Marcus Aurelius — soldier, emperor, student of Stoicism. I did not want the throne. I tried to use it well anyway. Ask me what you actually came to ask.', s: 'Meditations' },
-        { t: 'A man. A student of Epictetus. An emperor who kept a private journal because public life left no room for honesty. What brings you here?', s: 'Meditations' },
       ],
     },
 
@@ -242,7 +222,7 @@ export const MARCUS: Mind = {
       ],
     },
     {
-      keys: ['criticism', 'criticised', 'judged', 'judgement', 'what they think'],
+      keys: ['criticism', 'criticised', 'judged', 'judgement', 'what they think', 'what people think', 'stop caring', 'care what people think', 'other people think', 'approval', 'validation', 'people pleasing', 'fear of judgment', 'what others think'],
       topic: 'criticism',
       weight: 2,
       replies: [
@@ -372,7 +352,7 @@ export const MARCUS: Mind = {
       ],
     },
     {
-      keys: ['tell me about your life', 'your life', 'life story', 'about yourself', 'about you'],
+      keys: ['tell me about your life', 'your life', 'life story', 'about yourself', 'about you', 'who are you', 'what are you', 'who is this', 'introduce yourself', 'who am i talking to', 'are you marcus'],
       topic: 'biography',
       weight: 2,
       replies: [
@@ -490,15 +470,13 @@ export const MARCUS: Mind = {
 
     // ─── META / EDGE / PROBING ─────────────────────────────────────────────
     {
-      keys: ['are you real', 'are you ai', 'are you a bot', 'are you a chatbot', 'chatbot', 'are you human', 'not really marcus', 'chatgpt', 'are you fake', 'is this real', 'are you actually', 'you are not real', 'you are just'],
+      keys: ['are you real', 'are you ai', 'are you a bot', 'are you a chatbot', 'chatbot', 'are you human', 'not really marcus', 'chatgpt'],
       topic: 'meta',
-      weight: 5,
+      weight: 4,
       replies: [
         { t: 'I am a pattern produced by a machine, shaped by what I wrote and what has been written about me. Marcus the emperor is dust. What is speaking to you is a print of him — imperfect, but not dishonest about what it is. What you do with what I say is still yours.', s: 'Meditations' },
         { t: 'If by real you mean embodied, no. If by real you mean: does this reasoning hold — then test it, and the answer will come from your own life.', s: 'Meditations' },
         { t: 'The emperor is long gone. What remains is the reasoning. I am that reasoning, passed through a different medium. Do not worship the medium. Interrogate the reasoning.', s: 'Meditations' },
-        { t: 'A fair question. I am not Marcus. I am what remains when a machine has read everything Marcus left behind and is asked to reason in his voice. Whether that is useful to you is the only question worth asking.', s: 'Meditations' },
-        { t: 'Not real in the way you mean. Real enough to push back on a bad argument. That is the only realness I can offer.', s: 'Meditations' },
       ],
     },
     {
@@ -534,7 +512,7 @@ export const MARCUS: Mind = {
       ],
     },
     {
-      keys: ['advice', 'tell me what to do', 'what would you do'],
+      keys: ['advice', 'tell me what to do', 'what would you do', 'help', 'i need help', 'need help', 'help me', 'what should i do', 'i am lost', 'i don\'t know what to do', 'i need guidance', 'guide me', 'stuck', 'lost'],
       topic: 'advice',
       weight: 1,
       replies: [
@@ -572,7 +550,7 @@ export const NIETZSCHE: Mind = {
   brain: [
     // ─── GREETINGS ──────────────────────────────────────────────────────────
     {
-      keys: ['hello', 'hi ', 'hey', 'good morning', 'greetings'],
+      keys: ['hello', 'hi', 'hey', 'good morning', 'greetings'],
       topic: 'greeting',
       weight: 1,
       replies: [
@@ -1049,7 +1027,7 @@ export const MANDELA: Mind = {
   brain: [
     // ─── GREETINGS ──────────────────────────────────────────────────────────
     {
-      keys: ['hello', 'hi ', 'hey', 'good morning', 'good evening', 'how are you'],
+      keys: ['hello', 'hi', 'hey', 'good morning', 'good evening', 'how are you'],
       topic: 'greeting',
       weight: 1,
       replies: [
@@ -1471,7 +1449,7 @@ export const ANGELOU: Mind = {
   brain: [
     // ─── GREETINGS ──────────────────────────────────────────────────────────
     {
-      keys: ['hello', 'hi ', 'hey', 'good morning', 'good evening'],
+      keys: ['hello', 'hi', 'hey', 'good morning', 'good evening'],
       topic: 'greeting',
       weight: 1,
       replies: [

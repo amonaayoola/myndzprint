@@ -114,7 +114,13 @@ function matchLocalBrain(mind: Mind, message: string, ctx: ReplyContext): BrainR
     const score = scoreEntry(entry, lower)
     if (score > 0) scored.push({ entryIdx: idx, score })
   })
-  if (scored.length === 0) return null
+  // For very short queries (≤ 3 words) with no match, don't fall through to corpus —
+  // use the __redirect__ fallback instead which is always voice-appropriate
+  if (scored.length === 0) {
+    const wordCount = message.trim().split(/\s+/).length
+    if (wordCount <= 3) return null  // caller will use redirect
+    return null
+  }
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
@@ -367,8 +373,13 @@ export function localReply(mind: Mind, message: string, history: Message[]): Rep
     if (expandedMatch) return { reply: expandedMatch.t, source: expandedMatch.s, engine: 'local' }
   }
 
-  const fromCorpus = corpusFallback(mind, message)
-  if (fromCorpus) return { reply: fromCorpus.t, source: fromCorpus.s, engine: 'local' }
+  // Short unmatched queries should use redirect (voice-appropriate fallback), not corpus
+  // Corpus fallback on short queries picks random sentences which are almost always wrong
+  const wordCount = trimmed.trim().split(/\s+/).length
+  if (wordCount > 4) {
+    const fromCorpus = corpusFallback(mind, message)
+    if (fromCorpus) return { reply: fromCorpus.t, source: fromCorpus.s, engine: 'local' }
+  }
 
   const redirect = getRedirect(mind, message, ctx)
   if (redirect) return { reply: redirect.t, source: redirect.s, engine: 'local' }
