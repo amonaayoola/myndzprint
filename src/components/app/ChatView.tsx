@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/appStore'
-import { ragReplyStream, type ReplyTier } from '@/lib/ragEngine'
+import { ragReply, type ReplyTier } from '@/lib/ragEngine'
 import { showToast } from '@/components/ui/Toast'
+import { track } from '@/lib/analytics'
 import IndexBadge from '@/components/ui/IndexBadge'
 import { SUGGESTIONS } from '@/data/static'
 import type { Message } from '@/types'
@@ -29,18 +30,20 @@ export default function ChatView() {
   const messages = currentMindId ? getMessages(currentMindId) : []
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
-  const [streamingText, setStreamingText] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, typing, streamingText])
+  }, [messages, typing])
 
   useEffect(() => {
     setInput('')
     textareaRef.current?.focus()
-  }, [currentMindId])
+    if (currentMindId && mind) {
+      track('mind_open', { mindId: currentMindId, userEmail: useAppStore.getState().user?.email || undefined })
+    }
+  }, [currentMindId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send(text: string) {
     if (!text.trim() || !mind || !currentMindId || typing) return
@@ -54,42 +57,20 @@ export default function ChatView() {
     const historyWithCurrent = [...history, userMsg]
     addMessage(currentMindId, userMsg)
     setTyping(true)
+    track('message_sent', { mindId: currentMindId, userEmail: useAppStore.getState().user?.email || undefined })
 
     try {
-      await ragReplyStream(
-        mind,
-        text.trim(),
-        historyWithCurrent,
-        apiKey || null,
-        {},
-        {
-          onToken: (token) => {
-            setTyping(false)
-            setStreamingText(prev => (prev ?? '') + token)
-          },
-          onDone: (result) => {
-            setStreamingText(null)
-            addMessage(currentMindId, {
-              role: 'assistant',
-              content: result.reply,
-              source: result.source,
-              engine: result.tier,
-              timestamp: Date.now(),
-            })
-          },
-          onError: (err) => {
-            setTyping(false)
-            setStreamingText(null)
-            showToast('Something went wrong. Try again.')
-            console.error(err)
-          },
-        },
-        provider,
-        model
-      )
+      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined, {}, provider, model)
+      setTyping(false)
+      addMessage(currentMindId, {
+        role: 'assistant',
+        content: result.reply,
+        source: result.source,
+        engine: result.tier,
+        timestamp: Date.now(),
+      })
     } catch (err) {
       setTyping(false)
-      setStreamingText(null)
       showToast('Something went wrong. Try again.')
       console.error(err)
     }
@@ -173,15 +154,6 @@ export default function ChatView() {
         })}
 
         {typing && <TypingDots />}
-        {streamingText !== null && (
-          <div className="msg-row assistant">
-            <div className="msg-tag">
-              <div className="mind-avatar" style={{ width: 22, height: 22, fontSize: 11 }}>{mind.initial}</div>
-              <span className="name">{mind.name}</span>
-            </div>
-            <div className="bubble assistant">{streamingText}<span className="streaming-cursor" /></div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 

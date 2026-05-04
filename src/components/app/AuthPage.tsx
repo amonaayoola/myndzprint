@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
+import { track } from '@/lib/analytics'
 
 // Bug #1 fix: hash passwords with SHA-256 via Web Crypto API before storing/comparing
 async function hashPassword(password: string): Promise<string> {
@@ -50,6 +51,7 @@ export default function AuthPage() {
       const users = safeParseUsers()
       const found = users.find(u => u.email === email.trim() && u.password === hashedPassword)
       if (!found) { setError('No account found with those details.'); return }
+      track('login', { userEmail: email.trim() })
       login(found.name, email.trim())
     } else {
       // Bug #15 fix: JSON.parse wrapped in try/catch via safeParseUsers
@@ -63,6 +65,7 @@ export default function AuthPage() {
       } catch {
         setError('Could not save account. Storage may be unavailable.'); return
       }
+      track('signup', { userEmail: email.trim(), metadata: { name: name.trim() } })
       login(name.trim(), email.trim())
     }
   }

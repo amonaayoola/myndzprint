@@ -1,6 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import Navbar from './Navbar'
+import { track } from '@/lib/analytics'
 import Hero from './Hero'
 import Marquee from './Marquee'
 import HowSection from './HowSection'
@@ -48,6 +49,7 @@ function initCursorSpotlight() {
 
 export default function LandingPage() {
   useEffect(() => {
+    track('page_visit')
     const observer = initRevealObserver()
     const cleanup = initCursorSpotlight()
     return () => {

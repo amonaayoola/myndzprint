@@ -52,8 +52,36 @@ export default function SettingsView() {
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [exportingFeedback, setExportingFeedback] = useState(false)
 
-  // Admin: export all feedback as Excel
+  // Admin
   const isAdmin = user?.email === 'amonaayoola@gmail.com'
+
+  // Admin analytics state
+  interface AnalyticsData {
+    totalEvents: number
+    uniqueUsers: number
+    pageVisits: number
+    signups: number
+    logins: number
+    totalChats: number
+    mindOpens: number
+    mindsCreated: number
+    mindsRanked: [string, number][]
+    dailyVisits: [string, number][]
+    byEvent: [string, number][]
+  }
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+
+  async function loadAnalytics() {
+    setAnalyticsLoading(true)
+    try {
+      const token = process.env.NEXT_PUBLIC_FEEDBACK_EXPORT_TOKEN || ''
+      const res = await fetch(`/api/analytics${token ? `?token=${encodeURIComponent(token)}` : ''}`)
+      if (res.ok) setAnalytics(await res.json())
+    } catch { /* silent */ } finally {
+      setAnalyticsLoading(false)
+    }
+  }
 
   async function exportFeedback() {
     setExportingFeedback(true)
@@ -578,6 +606,82 @@ export default function SettingsView() {
             </div>
           )}
         </div>
+
+        {/* Admin Analytics Dashboard */}
+        {isAdmin && (
+          <div className="settings-section">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="settings-label">Analytics</div>
+              <button
+                onClick={loadAnalytics}
+                disabled={analyticsLoading}
+                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text2)', borderRadius: 7, padding: '4px 12px', fontSize: 12, cursor: analyticsLoading ? 'not-allowed' : 'pointer', opacity: analyticsLoading ? 0.6 : 1 }}
+              >
+                {analyticsLoading ? 'Loading...' : analytics ? 'Refresh' : 'Load stats'}
+              </button>
+            </div>
+
+            {analytics && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 12 }}>
+                {/* Top counters */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  {[
+                    { label: 'Page Visits', value: analytics.pageVisits },
+                    { label: 'Sign Ups', value: analytics.signups },
+                    { label: 'Logins', value: analytics.logins },
+                    { label: 'Total Chats', value: analytics.totalChats },
+                    { label: 'Mind Opens', value: analytics.mindOpens },
+                    { label: 'Unique Users', value: analytics.uniqueUsers },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--gold)' }}>{value.toLocaleString()}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Top minds by messages */}
+                {analytics.mindsRanked.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8, fontWeight: 500 }}>Top Minds by Messages</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {analytics.mindsRanked.slice(0, 10).map(([mindId, count]) => {
+                        const mindName = minds.find(m => m.id === mindId)?.name || mindId
+                        const max = analytics.mindsRanked[0][1]
+                        return (
+                          <div key={mindId} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ fontSize: 12, color: 'var(--text2)', width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mindName}</div>
+                            <div style={{ flex: 1, background: 'var(--surface2)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                              <div style={{ width: `${(count / max) * 100}%`, height: '100%', background: 'var(--gold)', borderRadius: 4 }} />
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--text3)', width: 30, textAlign: 'right' }}>{count}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* All event counts */}
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8, fontWeight: 500 }}>All Events</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {analytics.byEvent.map(([event, count]) => (
+                      <div key={event} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text2)' }}>{event}</span>
+                        <span style={{ color: 'var(--text3)' }}>{count.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!analytics && !analyticsLoading && (
+              <div style={{ fontSize: 12, color: 'var(--text3)', paddingTop: 8 }}>Click "Load stats" to see platform analytics.</div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
