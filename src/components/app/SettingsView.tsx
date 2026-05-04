@@ -50,6 +50,30 @@ export default function SettingsView() {
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSending, setFeedbackSending] = useState(false)
   const [feedbackSent, setFeedbackSent] = useState(false)
+  const [exportingFeedback, setExportingFeedback] = useState(false)
+
+  // Admin: export all feedback as Excel
+  const isAdmin = user?.email === 'amonaayoola@gmail.com'
+
+  async function exportFeedback() {
+    setExportingFeedback(true)
+    try {
+      const token = process.env.NEXT_PUBLIC_FEEDBACK_EXPORT_TOKEN || ''
+      const url = `/api/feedback/export${token ? `?token=${encodeURIComponent(token)}` : ''}`
+      const res = await fetch(url)
+      if (!res.ok) { showToast('Export failed.'); return }
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `myndzprint-feedback-${new Date().toISOString().slice(0, 10)}.xlsx`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      showToast('Export failed.')
+    } finally {
+      setExportingFeedback(false)
+    }
+  }
 
   useEffect(() => {
     loadIndexInfo()
@@ -527,6 +551,29 @@ export default function SettingsView() {
                 }}
               >
                 {feedbackSending ? 'Sending...' : 'Send feedback'}
+              </button>
+            </div>
+          )}
+
+          {/* Admin: export all feedback as Excel */}
+          {isAdmin && (
+            <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)', marginTop: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>Admin</div>
+              <button
+                onClick={exportFeedback}
+                disabled={exportingFeedback}
+                style={{
+                  padding: '7px 16px',
+                  background: 'transparent',
+                  color: 'var(--text2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  cursor: exportingFeedback ? 'not-allowed' : 'pointer',
+                  opacity: exportingFeedback ? 0.6 : 1,
+                }}
+              >
+                {exportingFeedback ? 'Exporting...' : 'Export feedback as Excel'}
               </button>
             </div>
           )}
