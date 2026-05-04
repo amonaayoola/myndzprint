@@ -1,28 +1,24 @@
 /**
  * embedder.ts
  *
- * Two backends behind one interface:
- *   Server route:  /api/embed  (uses OPENAI_API_KEY from server env)
- *   Offline:       all-MiniLM-L6-v2 via Transformers.js (runs in browser)
+ * Embedding backends, in priority order:
  *
- * Turbopack-safe: handles the case where @xenova/transformers returns
- * undefined/null or wraps exports in a .default object.
+ *  1. /api/embed server route  — uses OpenAI text-embedding-3-small (if apiKey set)
+ *  2. Transformers.js          — all-MiniLM-L6-v2, runs in browser, ~25MB download
+ *                                loaded lazily; hashEmbed used until ready
+ *  3. hashEmbed                — FNV-1a char n-gram fallback, always available
+ *
+ * Turbopack note: dynamic import of @xenova/transformers works fine in production
+ * (standard Next.js build). It crashes only under Turbopack dev mode. We guard
+ * with process.env.NODE_ENV !== 'development' before attempting the import.
  */
 
-// ── Lightweight keyword hash fallback ────────────────────────────────────────
-// Turbopack (Next.js dev) crashes when dynamically importing @xenova/transformers
-// with "Cannot convert undefined or null to object" at Object.keys.
-// We skip Transformers.js entirely and always use this hash embedder in the browser.
-// It produces a sparse 384-dim vector via character n-gram hashing — lower quality
-// than MiniLM but indexing always completes and similarity search works well for
-// high-keyword-overlap queries. Production deployments should use the /api/embed
-// server route with an OpenAI key for full-quality embeddings.
+// ── hashEmbed: fast offline fallback ────────────────────────────────────────
 function hashEmbed(text: string): Float32Array {
   const vec = new Float32Array(384)
   const lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
   const words = lower.split(/\s+/).filter(Boolean)
   for (const word of words) {
-    // 3-gram character hashing into the vector space
     for (let i = 0; i <= word.length - 3; i++) {
       const gram = word.slice(i, i + 3)
       let h = 2166136261
@@ -32,7 +28,6 @@ function hashEmbed(text: string): Float32Array {
       }
       vec[h % 384] += 1
     }
-    // Also hash full word
     let hw = 2166136261
     for (let j = 0; j < word.length; j++) {
       hw ^= word.charCodeAt(j)
@@ -40,7 +35,6 @@ function hashEmbed(text: string): Float32Array {
     }
     vec[hw % 384] += 2
   }
-  // L2 normalize
   let norm = 0
   for (let i = 0; i < 384; i++) norm += vec[i] * vec[i]
   norm = Math.sqrt(norm) + 1e-8
@@ -48,14 +42,68 @@ function hashEmbed(text: string): Float32Array {
   return vec
 }
 
-async function embedOffline(texts: string[]): Promise<Float32Array[]> {
-  // Always use hashEmbed in the browser — Transformers.js dynamic imports
-  // crash under Turbopack and add 23MB of WASM overhead even when they work.
-  // The /api/embed server route (with OPENAI_API_KEY) is the production path
-  // for full-quality embeddings. hashEmbed is good enough for local offline use.
-  return texts.map(t => hashEmbed(t || ''))
+// ── Transformers.js pipeline (production only) ────────────────────────────
+type Pipeline = (texts: string[], opts: { pooling: string; normalize: boolean }) => Promise<{ data: Float32Array }>
+
+let _pipe: Pipeline | null = null
+let _pipeLoading = false
+let _pipeReady = false
+let _pipeListeners: Array<() => void> = []
+
+async function getPipeline(): Promise<Pipeline | null> {
+  if (_pipeReady) return _pipe
+  if (_pipeLoading) {
+    // Wait for in-progress load
+    return new Promise(resolve => {
+      _pipeListeners.push(() => resolve(_pipe))
+    })
+  }
+
+  // Only attempt in browser, only in production
+  if (typeof window === 'undefined') return null
+  if (process.env.NODE_ENV === 'development') return null
+
+  _pipeLoading = true
+  try {
+    const { pipeline, env } = await import('@xenova/transformers')
+    // Use CDN-hosted ONNX models — no bundling needed
+    env.allowLocalModels = false
+    env.useBrowserCache = true
+    const pipe = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+    _pipe = pipe as unknown as Pipeline
+    _pipeReady = true
+  } catch (e) {
+    console.warn('Transformers.js failed to load, using hashEmbed:', e)
+    _pipe = null
+    _pipeReady = true  // don't retry
+  }
+  _pipeLoading = false
+  _pipeListeners.forEach(fn => fn())
+  _pipeListeners = []
+  return _pipe
 }
 
+async function embedWithTransformers(texts: string[]): Promise<Float32Array[] | null> {
+  const pipe = await getPipeline()
+  if (!pipe) return null
+  try {
+    const results: Float32Array[] = []
+    // Process in batches of 8 to avoid OOM
+    for (let i = 0; i < texts.length; i += 8) {
+      const batch = texts.slice(i, i + 8)
+      for (const text of batch) {
+        const out = await pipe([text], { pooling: 'mean', normalize: true })
+        results.push(new Float32Array(out.data))
+      }
+    }
+    return results
+  } catch (e) {
+    console.warn('Transformers.js inference failed:', e)
+    return null
+  }
+}
+
+// ── /api/embed server route ───────────────────────────────────────────────
 async function embedViaRoute(texts: string[], clientKey?: string): Promise<Float32Array[] | null> {
   try {
     const res = await fetch('/api/embed', {
@@ -73,16 +121,22 @@ async function embedViaRoute(texts: string[], clientKey?: string): Promise<Float
   }
 }
 
+// ── Public API ────────────────────────────────────────────────────────────
 export interface EmbedOptions {
   openAiKey?: string
 }
 
 export async function embedTexts(texts: string[], opts: EmbedOptions = {}): Promise<Float32Array[]> {
-  // Try server route first (keeps API keys off browser)
+  // 1. Server route (OpenAI key)
   const serverResult = await embedViaRoute(texts, opts.openAiKey)
   if (serverResult) return serverResult
-  // Fall back to in-browser Transformers.js
-  return embedOffline(texts)
+
+  // 2. Transformers.js (production semantic embeddings)
+  const transformerResult = await embedWithTransformers(texts)
+  if (transformerResult) return transformerResult
+
+  // 3. hashEmbed fallback
+  return texts.map(t => hashEmbed(t || ''))
 }
 
 export async function embedQuery(text: string, opts: EmbedOptions = {}): Promise<Float32Array> {
@@ -90,11 +144,18 @@ export async function embedQuery(text: string, opts: EmbedOptions = {}): Promise
   return vecs[0]
 }
 
+/**
+ * Call this on app startup to begin loading the model in the background.
+ * Queries will use hashEmbed until the model is ready, then automatically
+ * switch to Transformers.js for all subsequent embeddings.
+ */
 export function preloadOfflineModel(): void {
-  // No-op: Transformers.js removed from browser path (Turbopack incompatible).
-  // Embeddings use hashEmbed offline or /api/embed server route with OpenAI key.
+  if (typeof window === 'undefined') return
+  if (process.env.NODE_ENV === 'development') return
+  // Fire and forget — model loads in background
+  getPipeline().catch(() => {})
 }
 
 export function isOfflineModelLoaded(): boolean {
-  return false
+  return _pipeReady && _pipe !== null
 }
