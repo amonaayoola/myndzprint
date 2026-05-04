@@ -21,7 +21,6 @@ import { getChunksForMind, topK, hasChunks, querySupabase, hasChunksInSupabase, 
 import { localReply, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
-export type ReplyTier = 'api-rag' | 'offline-rag' | 'offline-fallback'
 // ── Intent detection: map a user message to topic + register labels ───────────
 
 const INTENT_TOPICS: Record<string, string[]> = {
@@ -101,31 +100,32 @@ async function tier1Generation(
 
   // Use Supabase pgvector when available (faster, server-side similarity search)
   // Fall back to local IndexedDB + cosine scoring
+  // topK=2 keeps context lean — 2 chunks is enough to ground a 2-4 sentence reply
   let relevant: Awaited<ReturnType<typeof getChunksForMind>>
   const sbAvailable = await isSupabaseAvailable()
   if (sbAvailable) {
-    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 5, intent.topicLabel))
+    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 2, intent.topicLabel))
   } else {
     const allChunks = await getChunksForMind(mind.id)
-    relevant = deduplicateChunks(topK(queryVec, allChunks, 5, intent))
+    relevant = deduplicateChunks(topK(queryVec, allChunks, 2, intent))
   }
 
-  const context = relevant.map(c => c.text).join('\n\n')
+  // Truncate each chunk to ~80 words to keep context tokens low
+  const truncate = (text: string, maxWords = 80) => {
+    const words = text.split(/\s+/)
+    return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
+  }
+  const context = relevant.map(c => truncate(c.text)).join('\n\n')
 
+  // Compact system prompt — every word costs tokens
   const systemPrompt = [
     mind.system || `You are ${mind.name}. Speak in their voice.`,
-    '',
-    context
-      ? `The following passages are from ${mind.name}'s documented words and writings. Ground your response in this material. Quote or closely paraphrase where relevant. Do not invent facts that contradict this material:\n\n---\n${context}\n---`
-      : '',
-    '',
-    'Respond in 2-4 sentences in their distinctive voice.',
-    'Never use em dashes. Use a period or comma instead.',
-    'End with [Source: <work>] when drawing from specific material.',
-    'If you cannot answer from the available material, say so honestly in character.',
-  ].filter(Boolean).join('\n')
+    context ? `Relevant source material:\n---\n${context}\n---\nGround your reply in this. Do not contradict it.` : '',
+    'Reply in 2-3 sentences. No em dashes. End with [Source: <work>] if drawing from specific material.',
+  ].filter(Boolean).join('\n\n')
 
-  const recentHistory = history.slice(-40)
+  // Last 3 exchanges (6 messages) — enough context at minimal cost
+  const recentHistory = history.slice(-6)
   const messages = [
     ...recentHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -140,7 +140,7 @@ async function tier1Generation(
       apiKey,
       provider: provider || 'anthropic',
       model: model || 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      max_tokens: 400,
       system: systemPrompt,
       messages,
     }),
@@ -199,6 +199,153 @@ async function tier2Offline(
     reply: stripEmDash(topChunk.text.trim()),
     source: mind.name,
     engine: 'offline-rag',
+  }
+}
+
+// ── Streaming tier 1 — yields text tokens as they arrive ─────────────────────
+async function* tier1Stream(
+  mind: Mind,
+  userMessage: string,
+  history: Message[],
+  apiKey: string,
+  provider: string,
+  model: string,
+  embedOpts: EmbedOptions
+): AsyncGenerator<string> {
+  const queryVec = await embedQuery(userMessage, embedOpts)
+  const intent = detectIntent(userMessage)
+
+  let relevant: Awaited<ReturnType<typeof getChunksForMind>>
+  const sbAvailable = await isSupabaseAvailable()
+  if (sbAvailable) {
+    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 2, intent.topicLabel))
+  } else {
+    const allChunks = await getChunksForMind(mind.id)
+    relevant = deduplicateChunks(topK(queryVec, allChunks, 2, intent))
+  }
+
+  const truncate = (text: string, maxWords = 80) => {
+    const words = text.split(/\s+/)
+    return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
+  }
+  const context = relevant.map(c => truncate(c.text)).join('\n\n')
+
+  const systemPrompt = [
+    mind.system || `You are ${mind.name}. Speak in their voice.`,
+    context ? `Relevant source material:\n---\n${context}\n---\nGround your reply in this. Do not contradict it.` : '',
+    'Reply in 2-3 sentences. No em dashes. End with [Source: <work>] if drawing from specific material.',
+  ].filter(Boolean).join('\n\n')
+
+  const recentHistory = history.slice(-6)
+  const messages = [
+    ...recentHistory
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({ role: m.role, content: m.content })),
+    { role: 'user' as const, content: userMessage },
+  ]
+
+  const res = await fetch('/api/llm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      apiKey,
+      provider: provider || 'anthropic',
+      model: model || 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      system: systemPrompt,
+      messages,
+      stream: true,
+    }),
+  })
+
+  if (!res.ok || !res.body) {
+    throw new Error(`API error ${res.status}`)
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const data = line.slice(6).trim()
+      if (data === '[DONE]') return
+
+      try {
+        const json = JSON.parse(data)
+        // Anthropic streaming
+        if (json.type === 'content_block_delta' && json.delta?.text) {
+          yield json.delta.text
+        }
+        // OpenAI / OpenRouter streaming
+        if (json.choices?.[0]?.delta?.content) {
+          yield json.choices[0].delta.content
+        }
+      } catch {
+        // skip malformed SSE lines
+      }
+    }
+  }
+}
+
+// ── Public streaming entry point ──────────────────────────────────────────────
+export type StreamCallbacks = {
+  onToken: (token: string) => void
+  onDone: (result: ReplyResult) => void
+  onError: (err: Error) => void
+}
+
+export async function ragReplyStream(
+  mind: Mind,
+  userMessage: string,
+  history: Message[],
+  apiKey: string | null,
+  embedOpts: EmbedOptions,
+  callbacks: StreamCallbacks,
+  provider = 'anthropic',
+  model = 'claude-haiku-4-5-20251001'
+): Promise<void> {
+  const [localIndexed, sbAvailable, sbIndexed] = await Promise.all([
+    hasChunks(mind.id),
+    isSupabaseAvailable(),
+    isSupabaseAvailable().then(avail => avail ? hasChunksInSupabase(mind.id) : false),
+  ])
+  const indexed = localIndexed || sbIndexed
+
+  if (apiKey && indexed) {
+    try {
+      let fullText = ''
+      for await (const token of tier1Stream(mind, userMessage, history, apiKey, provider, model, embedOpts)) {
+        fullText += token
+        callbacks.onToken(token)
+      }
+      // Parse source tag from complete text
+      const cleaned = stripEmDash(fullText.trim())
+      const sourceMatch = cleaned.match(/\[Source:\s*([^\]]+)\]/)
+      const source = sourceMatch ? sourceMatch[1].trim() : mind.name
+      const reply = cleaned.replace(/\[Source:[^\]]+\]/g, '').trim()
+      callbacks.onDone({ reply, source, engine: 'llm' })
+      return
+    } catch (err) {
+      console.warn('Stream tier 1 failed, falling back:', err)
+    }
+  }
+
+  // Non-streaming fallback for offline tiers
+  try {
+    const result = await ragReply(mind, userMessage, history, apiKey, embedOpts, provider, model)
+    // Simulate streaming for consistent UX — emit whole reply at once
+    callbacks.onToken(result.reply)
+    callbacks.onDone(result)
+  } catch (err) {
+    callbacks.onError(err instanceof Error ? err : new Error(String(err)))
   }
 }
 

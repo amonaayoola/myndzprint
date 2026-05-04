@@ -5,7 +5,7 @@ export const runtime = 'edge'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { system, messages, max_tokens = 500, provider = 'anthropic', model } = body
+    const { system, messages, max_tokens = 300, provider = 'anthropic', model, stream = false } = body
 
     // ── Anthropic ─────────────────────────────────────────────────────────────
     if (provider === 'anthropic') {
@@ -30,12 +30,23 @@ export async function POST(req: NextRequest) {
           max_tokens,
           system,
           messages,
+          stream,
         }),
       })
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: { message: res.statusText } }))
         return NextResponse.json(err, { status: res.status })
+      }
+
+      if (stream) {
+        // Pass streaming response directly to client
+        return new Response(res.body, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+          },
+        })
       }
 
       return NextResponse.json(await res.json())
@@ -61,6 +72,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: model || 'gpt-4o-mini',
           max_tokens,
+          stream,
           messages: [
             ...(system ? [{ role: 'system', content: system }] : []),
             ...messages,
@@ -73,8 +85,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(err, { status: res.status })
       }
 
+      if (stream) {
+        return new Response(res.body, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+          },
+        })
+      }
+
       const data = await res.json()
-      // Normalize to Anthropic format: { content: [{ text }] }
       const text = data.choices?.[0]?.message?.content || ''
       return NextResponse.json({ content: [{ text }] })
     }
@@ -94,12 +114,13 @@ export async function POST(req: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://myndzprint.com',
+          'HTTP-Referer': 'https://myndzprint.vercel.app',
           'X-Title': 'Myndzprint',
         },
         body: JSON.stringify({
           model: model || 'openai/gpt-4o-mini',
           max_tokens,
+          stream,
           messages: [
             ...(system ? [{ role: 'system', content: system }] : []),
             ...messages,
@@ -110,6 +131,15 @@ export async function POST(req: NextRequest) {
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: { message: res.statusText } }))
         return NextResponse.json(err, { status: res.status })
+      }
+
+      if (stream) {
+        return new Response(res.body, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+          },
+        })
       }
 
       const data = await res.json()

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/appStore'
-import { ragReply, type ReplyTier } from '@/lib/ragEngine'
+import { ragReplyStream, type ReplyTier } from '@/lib/ragEngine'
 import { showToast } from '@/components/ui/Toast'
 import IndexBadge from '@/components/ui/IndexBadge'
 import { SUGGESTIONS } from '@/data/static'
@@ -29,12 +29,13 @@ export default function ChatView() {
   const messages = currentMindId ? getMessages(currentMindId) : []
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [streamingText, setStreamingText] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, typing])
+  }, [messages, typing, streamingText])
 
   useEffect(() => {
     setInput('')
@@ -55,17 +56,40 @@ export default function ChatView() {
     setTyping(true)
 
     try {
-      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined, {}, provider, model)
-      setTyping(false)
-      addMessage(currentMindId, {
-        role: 'assistant',
-        content: result.reply,
-        source: result.source,
-        engine: result.tier,
-        timestamp: Date.now(),
-      })
+      await ragReplyStream(
+        mind,
+        text.trim(),
+        historyWithCurrent,
+        apiKey || null,
+        {},
+        {
+          onToken: (token) => {
+            setTyping(false)
+            setStreamingText(prev => (prev ?? '') + token)
+          },
+          onDone: (result) => {
+            setStreamingText(null)
+            addMessage(currentMindId, {
+              role: 'assistant',
+              content: result.reply,
+              source: result.source,
+              engine: result.tier,
+              timestamp: Date.now(),
+            })
+          },
+          onError: (err) => {
+            setTyping(false)
+            setStreamingText(null)
+            showToast('Something went wrong. Try again.')
+            console.error(err)
+          },
+        },
+        provider,
+        model
+      )
     } catch (err) {
       setTyping(false)
+      setStreamingText(null)
       showToast('Something went wrong. Try again.')
       console.error(err)
     }
@@ -149,6 +173,15 @@ export default function ChatView() {
         })}
 
         {typing && <TypingDots />}
+        {streamingText !== null && (
+          <div className="msg-row assistant">
+            <div className="msg-tag">
+              <div className="mind-avatar" style={{ width: 22, height: 22, fontSize: 11 }}>{mind.initial}</div>
+              <span className="name">{mind.name}</span>
+            </div>
+            <div className="bubble assistant">{streamingText}<span className="streaming-cursor" /></div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
