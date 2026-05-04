@@ -95,27 +95,31 @@ async function tier1Generation(
   model: string,
   embedOpts: EmbedOptions
 ): Promise<ReplyResult> {
-  const queryVec = await embedQuery(userMessage, embedOpts)
   const intent = detectIntent(userMessage)
 
-  // Use Supabase pgvector when available (faster, server-side similarity search)
-  // Fall back to local IndexedDB + cosine scoring
-  // topK=2 keeps context lean — 2 chunks is enough to ground a 2-4 sentence reply
-  let relevant: Awaited<ReturnType<typeof getChunksForMind>>
-  const sbAvailable = await isSupabaseAvailable()
-  if (sbAvailable) {
-    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 2, intent.topicLabel))
-  } else {
-    const allChunks = await getChunksForMind(mind.id)
-    relevant = deduplicateChunks(topK(queryVec, allChunks, 2, intent))
-  }
+  const [queryVec, sbAvailable] = await Promise.all([
+    embedQuery(userMessage, embedOpts),
+    isSupabaseAvailable(),
+  ])
 
-  // Truncate each chunk to ~80 words to keep context tokens low
   const truncate = (text: string, maxWords = 80) => {
     const words = text.split(/\s+/)
     return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
   }
-  const context = relevant.map(c => truncate(c.text)).join('\n\n')
+
+  let context = ''
+  try {
+    const ctxPromise = sbAvailable
+      ? querySupabase(mind.id, queryVec, 2, intent.topicLabel)
+      : getChunksForMind(mind.id).then(chunks => topK(queryVec, chunks, 2, intent))
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('context timeout')), 2000)
+    )
+    const relevant = deduplicateChunks(await Promise.race([ctxPromise, timeoutPromise]))
+    context = relevant.map(c => truncate(c.text)).join('\n\n')
+  } catch {
+    // Context timed out — proceed without it
+  }
 
   // Compact system prompt — every word costs tokens
   const systemPrompt = [
@@ -212,23 +216,33 @@ async function* tier1Stream(
   model: string,
   embedOpts: EmbedOptions
 ): AsyncGenerator<string> {
-  const queryVec = await embedQuery(userMessage, embedOpts)
   const intent = detectIntent(userMessage)
 
-  let relevant: Awaited<ReturnType<typeof getChunksForMind>>
-  const sbAvailable = await isSupabaseAvailable()
-  if (sbAvailable) {
-    relevant = deduplicateChunks(await querySupabase(mind.id, queryVec, 2, intent.topicLabel))
-  } else {
-    const allChunks = await getChunksForMind(mind.id)
-    relevant = deduplicateChunks(topK(queryVec, allChunks, 2, intent))
-  }
+  // Run embedding and Supabase check in parallel to save time
+  const [queryVec, sbAvailable] = await Promise.all([
+    embedQuery(userMessage, embedOpts),
+    isSupabaseAvailable(),
+  ])
 
+  // Fetch context with a 2s timeout — skip rather than block the LLM call
   const truncate = (text: string, maxWords = 80) => {
     const words = text.split(/\s+/)
     return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
   }
-  const context = relevant.map(c => truncate(c.text)).join('\n\n')
+
+  let context = ''
+  try {
+    const ctxPromise = sbAvailable
+      ? querySupabase(mind.id, queryVec, 2, intent.topicLabel)
+      : getChunksForMind(mind.id).then(chunks => topK(queryVec, chunks, 2, intent))
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('context timeout')), 2000)
+    )
+    const relevant = deduplicateChunks(await Promise.race([ctxPromise, timeoutPromise]))
+    context = relevant.map(c => truncate(c.text)).join('\n\n')
+  } catch {
+    // Context fetch timed out — proceed without it, LLM uses system prompt only
+  }
 
   const systemPrompt = [
     mind.system || `You are ${mind.name}. Speak in their voice.`,

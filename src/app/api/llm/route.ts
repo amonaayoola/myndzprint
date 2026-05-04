@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const runtime = 'edge'
+// Node.js runtime: no 25s edge timeout, supports longer LLM responses
+export const runtime = 'nodejs'
+export const maxDuration = 60  // seconds — covers slow models and long replies
 
 export async function POST(req: NextRequest) {
   try {
