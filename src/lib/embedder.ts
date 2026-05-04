@@ -53,20 +53,17 @@ let _pipeListeners: Array<() => void> = []
 async function getPipeline(): Promise<Pipeline | null> {
   if (_pipeReady) return _pipe
   if (_pipeLoading) {
-    // Wait for in-progress load
     return new Promise(resolve => {
       _pipeListeners.push(() => resolve(_pipe))
     })
   }
 
-  // Only attempt in browser, only in production
   if (typeof window === 'undefined') return null
   if (process.env.NODE_ENV === 'development') return null
 
   _pipeLoading = true
   try {
     const { pipeline, env } = await import('@xenova/transformers')
-    // Use CDN-hosted ONNX models — no bundling needed
     env.allowLocalModels = false
     env.useBrowserCache = true
     const pipe = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
@@ -75,7 +72,7 @@ async function getPipeline(): Promise<Pipeline | null> {
   } catch (e) {
     console.warn('Transformers.js failed to load, using hashEmbed:', e)
     _pipe = null
-    _pipeReady = true  // don't retry
+    _pipeReady = true
   }
   _pipeLoading = false
   _pipeListeners.forEach(fn => fn())
@@ -88,7 +85,6 @@ async function embedWithTransformers(texts: string[]): Promise<Float32Array[] | 
   if (!pipe) return null
   try {
     const results: Float32Array[] = []
-    // Process in batches of 8 to avoid OOM
     for (let i = 0; i < texts.length; i += 8) {
       const batch = texts.slice(i, i + 8)
       for (const text of batch) {
@@ -127,15 +123,12 @@ export interface EmbedOptions {
 }
 
 export async function embedTexts(texts: string[], opts: EmbedOptions = {}): Promise<Float32Array[]> {
-  // 1. Server route (OpenAI key)
   const serverResult = await embedViaRoute(texts, opts.openAiKey)
   if (serverResult) return serverResult
 
-  // 2. Transformers.js (production semantic embeddings)
   const transformerResult = await embedWithTransformers(texts)
   if (transformerResult) return transformerResult
 
-  // 3. hashEmbed fallback
   return texts.map(t => hashEmbed(t || ''))
 }
 
@@ -144,15 +137,9 @@ export async function embedQuery(text: string, opts: EmbedOptions = {}): Promise
   return vecs[0]
 }
 
-/**
- * Call this on app startup to begin loading the model in the background.
- * Queries will use hashEmbed until the model is ready, then automatically
- * switch to Transformers.js for all subsequent embeddings.
- */
 export function preloadOfflineModel(): void {
   if (typeof window === 'undefined') return
   if (process.env.NODE_ENV === 'development') return
-  // Fire and forget — model loads in background
   getPipeline().catch(() => {})
 }
 
