@@ -1678,3 +1678,124 @@
 /* App layout */
 .content-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
 
+/* ── Build Modal: Upload tabs ─────────────────────────────────────────────── */
+.upload-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 10px;
+}
+.upload-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.upload-tab:hover { background: var(--bg3); color: var(--text); }
+.upload-tab.active {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+/* ── Upload dropzone ──────────────────────────────────────────────────────── */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border: 1.5px dashed var(--border2);
+  border-radius: 12px;
+  background: var(--bg2);
+  cursor: pointer;
+  padding: 24px 16px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.upload-dropzone:hover:not(.processing) {
+  background: var(--bg3);
+  border-color: var(--gold-mid);
+}
+.upload-dropzone.processing { cursor: default; }
+.upload-dropzone-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.upload-dropzone-hint {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ── Upload status messages ───────────────────────────────────────────────── */
+.upload-status-msg {
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.upload-status-msg.success {
+  color: var(--green);
+  background: var(--green-bg);
+}
+.upload-status-msg.error {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+/* ── Corpus preview strip ─────────────────────────────────────────────────── */
+.upload-corpus-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(184,137,42,0.07);
+  font-size: 12px;
+  color: var(--gold);
+}
+.upload-corpus-preview button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: inherit;
+  padding: 0;
+}
+.upload-corpus-preview button:hover { color: var(--error); }
+
+/* ── Voice locked state ───────────────────────────────────────────────────── */
+.upload-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg2);
+  text-align: center;
+}
+.upload-locked-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+}
+.upload-locked-body {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.6;
+  max-width: 260px;
+}
+
