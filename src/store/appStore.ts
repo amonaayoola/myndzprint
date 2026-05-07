@@ -102,8 +102,29 @@ export const useAppStore = create<Store>()(
           if (!updated[m.id]) updated[m.id] = []
         }
         set({ conversations: updated })
+
+        // Load community minds published by other users
+        fetch('/api/community-minds')
+          .then(r => r.json())
+          .then(({ minds: communityMinds }) => {
+            if (!Array.isArray(communityMinds) || communityMinds.length === 0) return
+            const { minds: currentMinds, conversations: currentConvs } = get()
+            const currentIds = new Set(currentMinds.map((m: Mind) => m.id))
+            const newMinds = communityMinds
+              .filter((m: Mind) => !currentIds.has(m.id))
+              .map((m: Mind) => ({ ...m, type: 'community' as const }))
+            if (newMinds.length === 0) return
+            const newConvs = { ...currentConvs }
+            for (const m of newMinds) { if (!newConvs[m.id]) newConvs[m.id] = [] }
+            set({ minds: [...currentMinds, ...newMinds], conversations: newConvs })
+          })
+          .catch(() => { /* non-fatal */ })
       },
       logout: () => {
+        // Sign out from Supabase Auth (non-blocking)
+        import('../lib/supabaseClient').then(({ authSignOut }) => {
+          authSignOut().catch(console.warn)
+        })
         const convReset: Record<string, Message[]> = {}
         for (const m of MINDS_WITH_CORPUS) convReset[m.id] = []
         set({
