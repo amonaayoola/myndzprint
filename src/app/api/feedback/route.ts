@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
     console.log('[FEEDBACK]', JSON.stringify({ type, rating, message, featureRequest, email, ts }))
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('[feedback] error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

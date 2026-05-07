@@ -9,11 +9,29 @@ function sbHeaders() {
   return { url, headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' } }
 }
 
+// Allowlist of valid event names — prevents arbitrary strings being stored
+const VALID_EVENTS = new Set([
+  'page_visit', 'signup', 'login', 'logout',
+  'mind_open', 'message_sent', 'mind_created', 'mind_published',
+  'build_modal_open', 'file_upload', 'voice_upload',
+])
+
 // POST — track an event (fire-and-forget from client)
 export async function POST(req: NextRequest) {
   try {
     const { event, mindId, userEmail, metadata } = await req.json()
     if (!event) return NextResponse.json({ error: 'event required' }, { status: 400 })
+
+    // Reject unknown event names to prevent log pollution / injection
+    if (!VALID_EVENTS.has(event)) {
+      return NextResponse.json({ error: 'Unknown event' }, { status: 400 })
+    }
+
+    // Sanitise strings — truncate to reasonable lengths
+    const safeEvent = String(event).slice(0, 64)
+    const safeMindId = mindId ? String(mindId).slice(0, 128) : null
+    const safeEmail = userEmail ? String(userEmail).slice(0, 254) : null
+    const safeMetadata = metadata && typeof metadata === 'object' ? metadata : null
 
     const sb = sbHeaders()
     if (sb) {
@@ -21,17 +39,18 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { ...sb.headers, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
-          event,
-          mind_id: mindId || null,
-          user_email: userEmail || null,
-          metadata: metadata || null,
+          event: safeEvent,
+          mind_id: safeMindId,
+          user_email: safeEmail,
+          metadata: safeMetadata,
         }),
       })
     }
 
     return NextResponse.json({ ok: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  } catch {
+    // Don't leak internal error details on analytics route
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
 

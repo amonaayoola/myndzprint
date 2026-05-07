@@ -24,8 +24,19 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
+          // Existing COOP/COEP headers (required for SharedArrayBuffer / wasm)
           { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          // Prevent clickjacking
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Stop MIME-type sniffing
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Strict referrer policy
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Basic XSS protection (legacy browsers)
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // Permissions policy — disable unused browser features
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
     ]

@@ -151,6 +151,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: { message: `Unknown provider: ${provider}` } }, { status: 400 })
   } catch (err) {
-    return NextResponse.json({ error: { message: String(err) } }, { status: 500 })
+    console.error('[/api/llm]', err)
+    return NextResponse.json({ error: { message: 'Internal server error' } }, { status: 500 })
   }
 }

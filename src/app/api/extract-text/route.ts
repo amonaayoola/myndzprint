@@ -3,13 +3,27 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
+const MAX_FILE_SIZE_MB = 20
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+const ALLOWED_EXTENSIONS = new Set(['txt', 'md', 'pdf', 'docx'])
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-    const ext = file.name.split('.').pop()?.toLowerCase()
+    // Enforce file size limit
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.` }, { status: 413 })
+    }
+
+    // Validate extension against allowlist (prevent path traversal or unexpected types)
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return NextResponse.json({ error: 'Unsupported file type. Use TXT, PDF, or DOCX.' }, { status: 400 })
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer())
 
     if (ext === 'txt' || ext === 'md') {
