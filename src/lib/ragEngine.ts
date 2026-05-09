@@ -17,7 +17,7 @@
  * yields too few candidates.
  */
 import { embedQuery, type EmbedOptions } from './embedder'
-import { getChunksForMind, topK, hasChunks, querySupabase, hasChunksInSupabase, isSupabaseAvailable } from './vectorStore'
+import { getChunksForMind, topK, hasChunks } from './vectorStore'
 import { localReply, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
@@ -95,41 +95,29 @@ async function tier1Generation(
   model: string,
   embedOpts: EmbedOptions
 ): Promise<ReplyResult> {
+  const queryVec = await embedQuery(userMessage, embedOpts)
+  const allChunks = await getChunksForMind(mind.id)
+
+  // TagRAG: detect intent and filter by labels before scoring
   const intent = detectIntent(userMessage)
+  const relevant = deduplicateChunks(topK(queryVec, allChunks, 5, intent))
 
-  const [queryVec, sbAvailable] = await Promise.all([
-    embedQuery(userMessage, embedOpts),
-    isSupabaseAvailable(),
-  ])
+  const context = relevant.map(c => c.text).join('\n\n')
 
-  const truncate = (text: string, maxWords = 80) => {
-    const words = text.split(/\s+/)
-    return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
-  }
-
-  let context = ''
-  try {
-    const ctxPromise = sbAvailable
-      ? querySupabase(mind.id, queryVec, 2, intent.topicLabel)
-      : getChunksForMind(mind.id).then(chunks => topK(queryVec, chunks, 2, intent))
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('context timeout')), 2000)
-    )
-    const relevant = deduplicateChunks(await Promise.race([ctxPromise, timeoutPromise]))
-    context = relevant.map(c => truncate(c.text)).join('\n\n')
-  } catch {
-    // Context timed out — proceed without it
-  }
-
-  // Compact system prompt — every word costs tokens
   const systemPrompt = [
     mind.system || `You are ${mind.name}. Speak in their voice.`,
-    context ? `Relevant source material:\n---\n${context}\n---\nGround your reply in this. Do not contradict it.` : '',
-    'Reply in 2-3 sentences. No em dashes. End with [Source: <work>] if drawing from specific material.',
-  ].filter(Boolean).join('\n\n')
+    '',
+    context
+      ? `The following passages are from ${mind.name}'s documented words and writings. Ground your response in this material. Quote or closely paraphrase where relevant. Do not invent facts that contradict this material:\n\n---\n${context}\n---`
+      : '',
+    '',
+    'Respond in their distinctive voice. Answer the question fully — do not cut off mid-thought. Aim for 3-6 sentences, more if the question warrants depth.',
+    'Never use em dashes. Use a period or comma instead.',
+    'End with [Source: <work>] when drawing from specific material.',
+    'If you cannot answer from the available material, say so honestly in character.',
+  ].filter(Boolean).join('\n')
 
-  // Last 3 exchanges (6 messages) — enough context at minimal cost
-  const recentHistory = history.slice(-6)
+  const recentHistory = history.slice(-40)
   const messages = [
     ...recentHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -144,7 +132,7 @@ async function tier1Generation(
       apiKey,
       provider: provider || 'anthropic',
       model: model || 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      max_tokens: 1200,
       system: systemPrompt,
       messages,
     }),
@@ -206,163 +194,6 @@ async function tier2Offline(
   }
 }
 
-// ── Streaming tier 1 — yields text tokens as they arrive ─────────────────────
-async function* tier1Stream(
-  mind: Mind,
-  userMessage: string,
-  history: Message[],
-  apiKey: string,
-  provider: string,
-  model: string,
-  embedOpts: EmbedOptions
-): AsyncGenerator<string> {
-  const intent = detectIntent(userMessage)
-
-  // Run embedding and Supabase check in parallel to save time
-  const [queryVec, sbAvailable] = await Promise.all([
-    embedQuery(userMessage, embedOpts),
-    isSupabaseAvailable(),
-  ])
-
-  // Fetch context with a 2s timeout — skip rather than block the LLM call
-  const truncate = (text: string, maxWords = 80) => {
-    const words = text.split(/\s+/)
-    return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text
-  }
-
-  let context = ''
-  try {
-    const ctxPromise = sbAvailable
-      ? querySupabase(mind.id, queryVec, 2, intent.topicLabel)
-      : getChunksForMind(mind.id).then(chunks => topK(queryVec, chunks, 2, intent))
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('context timeout')), 2000)
-    )
-    const relevant = deduplicateChunks(await Promise.race([ctxPromise, timeoutPromise]))
-    context = relevant.map(c => truncate(c.text)).join('\n\n')
-  } catch {
-    // Context fetch timed out — proceed without it, LLM uses system prompt only
-  }
-
-  const systemPrompt = [
-    mind.system || `You are ${mind.name}. Speak in their voice.`,
-    context ? `Relevant source material:\n---\n${context}\n---\nGround your reply in this. Do not contradict it.` : '',
-    'Reply in 2-3 sentences. No em dashes. End with [Source: <work>] if drawing from specific material.',
-  ].filter(Boolean).join('\n\n')
-
-  const recentHistory = history.slice(-6)
-  const messages = [
-    ...recentHistory
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => ({ role: m.role, content: m.content })),
-    { role: 'user' as const, content: userMessage },
-  ]
-
-  const res = await fetch('/api/llm', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      apiKey,
-      provider: provider || 'anthropic',
-      model: model || 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      system: systemPrompt,
-      messages,
-      stream: true,
-    }),
-  })
-
-  if (!res.ok || !res.body) {
-    throw new Error(`API error ${res.status}`)
-  }
-
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
-
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const data = line.slice(6).trim()
-      if (data === '[DONE]') return
-
-      try {
-        const json = JSON.parse(data)
-        // Anthropic streaming
-        if (json.type === 'content_block_delta' && json.delta?.text) {
-          yield json.delta.text
-        }
-        // OpenAI / OpenRouter streaming
-        if (json.choices?.[0]?.delta?.content) {
-          yield json.choices[0].delta.content
-        }
-      } catch {
-        // skip malformed SSE lines
-      }
-    }
-  }
-}
-
-// ── Public streaming entry point ──────────────────────────────────────────────
-export type StreamCallbacks = {
-  onToken: (token: string) => void
-  onDone: (result: ReplyResult) => void
-  onError: (err: Error) => void
-}
-
-export async function ragReplyStream(
-  mind: Mind,
-  userMessage: string,
-  history: Message[],
-  apiKey: string | null,
-  embedOpts: EmbedOptions,
-  callbacks: StreamCallbacks,
-  provider = 'anthropic',
-  model = 'claude-haiku-4-5-20251001'
-): Promise<void> {
-  const [localIndexed, sbAvailable, sbIndexed] = await Promise.all([
-    hasChunks(mind.id),
-    isSupabaseAvailable(),
-    isSupabaseAvailable().then(avail => avail ? hasChunksInSupabase(mind.id) : false),
-  ])
-  const indexed = localIndexed || sbIndexed
-
-  if (apiKey && indexed) {
-    try {
-      let fullText = ''
-      for await (const token of tier1Stream(mind, userMessage, history, apiKey, provider, model, embedOpts)) {
-        fullText += token
-        callbacks.onToken(token)
-      }
-      // Parse source tag from complete text
-      const cleaned = stripEmDash(fullText.trim())
-      const sourceMatch = cleaned.match(/\[Source:\s*([^\]]+)\]/)
-      const source = sourceMatch ? sourceMatch[1].trim() : mind.name
-      const reply = cleaned.replace(/\[Source:[^\]]+\]/g, '').trim()
-      callbacks.onDone({ reply, source, engine: 'llm' })
-      return
-    } catch (err) {
-      console.warn('Stream tier 1 failed, falling back:', err)
-    }
-  }
-
-  // Non-streaming fallback for offline tiers
-  try {
-    const result = await ragReply(mind, userMessage, history, apiKey, embedOpts, provider, model)
-    // Simulate streaming for consistent UX — emit whole reply at once
-    callbacks.onToken(result.reply)
-    callbacks.onDone(result)
-  } catch (err) {
-    callbacks.onError(err instanceof Error ? err : new Error(String(err)))
-  }
-}
-
 // ── Public entry point ────────────────────────────────────────────────────────
 export async function ragReply(
   mind: Mind,
@@ -373,13 +204,7 @@ export async function ragReply(
   provider = 'anthropic',
   model = 'claude-haiku-4-5-20251001'
 ): Promise<ReplyResult> {
-  // Check both IndexedDB and Supabase for indexed content
-  const [localIndexed, sbAvailable, sbIndexed] = await Promise.all([
-    hasChunks(mind.id),
-    isSupabaseAvailable(),
-    isSupabaseAvailable().then(avail => avail ? hasChunksInSupabase(mind.id) : false),
-  ])
-  const indexed = localIndexed || sbIndexed
+  const indexed = await hasChunks(mind.id)
 
   if (apiKey && indexed) {
     try {

@@ -1,6 +1,9 @@
 'use client'
+import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
+import type { Mind } from '@/types'
 
 const NAV_ITEMS = [
   { view: 'home' as const, label: 'Home', icon: (
@@ -25,14 +28,39 @@ const NAV_ITEMS = [
   )},
 ]
 
-export default function Sidebar() {
-  const { appView, setAppView, user, logout, minds, currentMindId, selectMind, setBuildModalOpen } = useAppStore()
+function hashTag(mind: Mind): string {
+  if (mind.mindNumber != null) {
+    return `#${String(mind.mindNumber).padStart(3, '0')}`
+  }
+  // Generate a stable 3-digit hash from the mind id for user/community minds
+  let h = 0
+  for (let i = 0; i < mind.id.length; i++) h = (h * 31 + mind.id.charCodeAt(i)) >>> 0
+  return `#${String(h % 900 + 100)}`
+}
 
-  // Bug #20 fix: ownership guard — a mind belongs in the "Public" section only if
-  // it is type 'public' AND has no ownerEmail (platform mind, not user-built).
-  // User-built minds (even if type='public') show under "My minds" via ownerEmail.
+function matchesSearch(mind: Mind, q: string): boolean {
+  const s = q.toLowerCase()
+  const tag = hashTag(mind)
+  return (
+    mind.name.toLowerCase().includes(s) ||
+    mind.domain?.toLowerCase().includes(s) ||
+    mind.era?.toLowerCase().includes(s) ||
+    mind.tags?.some(t => t.toLowerCase().includes(s)) ||
+    tag.toLowerCase().includes(s)
+  )
+}
+
+export default function Sidebar() {
+  const router = useRouter()
+  const { appView, setAppView, user, logout, minds, currentMindId, selectMind, setBuildModalOpen } = useAppStore()
+  const [search, setSearch] = useState('')
+
   const publicMinds = minds.filter(m => m.type === 'public' && !m.ownerEmail)
   const builtMinds = minds.filter(m => m.type !== 'public' || m.ownerEmail)
+
+  const q = search.trim()
+  const filteredPublic = useMemo(() => q ? publicMinds.filter(m => matchesSearch(m, q)) : publicMinds, [publicMinds, q])
+  const filteredBuilt = useMemo(() => q ? builtMinds.filter(m => matchesSearch(m, q)) : builtMinds, [builtMinds, q])
 
   return (
     <aside className="sidebar">
@@ -58,32 +86,56 @@ export default function Sidebar() {
         ))}
       </nav>
 
+      {/* Search bar */}
+      <div className="sb-search-wrap">
+        <svg className="sb-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          className="sb-search"
+          type="text"
+          placeholder="Search minds or #001…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="sb-search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>
+        )}
+      </div>
+
       <div className="sb-section-label">Public minds</div>
       <div className="sb-minds">
-        {publicMinds.map(mind => (
+        {filteredPublic.length === 0 && q && (
+          <div className="sb-empty">No match</div>
+        )}
+        {filteredPublic.map(mind => (
           <button
             key={mind.id}
             className={`sb-mind-item${currentMindId === mind.id ? ' active' : ''}`}
             onClick={() => selectMind(mind.id)}
           >
             <div className="mind-avatar" style={{ width: 24, height: 24, fontSize: 11 }}>{mind.initial}</div>
-            <span>{mind.name}</span>
+            <span className="sb-mind-name">{mind.name}</span>
+            <span className="sb-mind-hash">{hashTag(mind)}</span>
           </button>
         ))}
       </div>
 
-      {builtMinds.length > 0 && (
+      {(filteredBuilt.length > 0 || builtMinds.length > 0) && (
         <>
           <div className="sb-section-label">My minds</div>
           <div className="sb-minds">
-            {builtMinds.map(mind => (
+            {filteredBuilt.length === 0 && q ? (
+              <div className="sb-empty">No match</div>
+            ) : filteredBuilt.map(mind => (
               <button
                 key={mind.id}
                 className={`sb-mind-item${currentMindId === mind.id ? ' active' : ''}`}
                 onClick={() => selectMind(mind.id)}
               >
                 <div className="mind-avatar" style={{ width: 24, height: 24, fontSize: 11 }}>{mind.initial}</div>
-                <span>{mind.name}</span>
+                <span className="sb-mind-name">{mind.name}</span>
+                <span className="sb-mind-hash">{hashTag(mind)}</span>
               </button>
             ))}
           </div>
@@ -103,7 +155,7 @@ export default function Sidebar() {
           <div className="sb-user-name">{user?.name ?? 'Guest'}</div>
           <div className="sb-user-email">{user?.email ?? ''}</div>
         </div>
-        <button className="sb-logout" onClick={logout} title="Sign out">
+        <button className="sb-logout" onClick={() => { logout(); router.push('/') }} title="Sign out">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
           </svg>

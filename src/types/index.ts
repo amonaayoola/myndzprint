@@ -26,6 +26,8 @@ export interface Mind {
   /** Bug #20: ownerEmail tracks which user built this mind — used to separate
    *  user-built minds from the platform's public minds in the sidebar. */
   ownerEmail?: string
+  /** Unique sequential number for public minds (e.g. 1 = Marcus Aurelius) */
+  mindNumber?: number
 }
 
 export interface Message {

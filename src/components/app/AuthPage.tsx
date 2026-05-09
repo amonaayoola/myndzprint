@@ -1,11 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
 import { track } from '@/lib/analytics'
 import { authSignUp, authSignIn } from '@/lib/supabaseClient'
 
 export default function AuthPage() {
+  const router = useRouter()
   const { authMode, setAuthMode, login } = useAppStore()
   const isLogin = authMode === 'login'
   const [name, setName] = useState('')
@@ -34,6 +36,7 @@ export default function AuthPage() {
         const displayName = data.user?.user_metadata?.name || email.split('@')[0]
         track('login', { userEmail: email.trim() })
         login(displayName, email.trim())
+        router.push('/app')
       } else {
         // ── Sign up via Supabase Auth ──────────────────────────────────────
         const data = await authSignUp(name.trim(), email.trim(), password)
@@ -42,6 +45,7 @@ export default function AuthPage() {
           // Email confirmation is disabled — user is immediately signed in
           track('signup', { userEmail: email.trim(), metadata: { name: name.trim() } })
           login(name.trim(), email.trim())
+          router.push('/app')
         } else {
           // Email confirmation required — tell user to check their inbox
           setEmailSent(true)
@@ -100,7 +104,7 @@ export default function AuthPage() {
       <div className="auth-wrap">
         <div className="spotlight" id="auth-spotlight" />
         <div className="auth-card">
-          <div className="auth-logo" onClick={() => useAppStore.getState().setPage('landing')}>
+          <div className="auth-logo" onClick={() => router.push('/')}>
             <Logo size={22} />
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, letterSpacing: '0.05em', color: 'var(--text)', lineHeight: 1 }}>
               Myndz<span style={{ color: 'var(--gold)' }}>print</span>

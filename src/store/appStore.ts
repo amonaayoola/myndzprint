@@ -103,20 +103,37 @@ export const useAppStore = create<Store>()(
         }
         set({ conversations: updated })
 
+        // Helper to merge new minds into store without duplicates
+        function mergeMinds(incoming: Mind[]) {
+          const { minds: currentMinds, conversations: currentConvs } = get()
+          const currentIds = new Set(currentMinds.map((m: Mind) => m.id))
+          const newMinds = incoming.filter((m: Mind) => !currentIds.has(m.id))
+          if (newMinds.length === 0) return
+          const newConvs = { ...currentConvs }
+          for (const m of newMinds) { if (!newConvs[m.id]) newConvs[m.id] = [] }
+          set({ minds: [...currentMinds, ...newMinds], conversations: newConvs })
+        }
+
+        // Load user's own saved minds from DB (cross-device sync)
+        import('../lib/supabaseClient').then(({ supabase }) => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            const token = session?.access_token
+            if (!token) return
+            fetch('/api/user-minds', { headers: { Authorization: `Bearer ${token}` } })
+              .then(r => r.json())
+              .then(({ minds: userMinds }) => {
+                if (Array.isArray(userMinds) && userMinds.length > 0) mergeMinds(userMinds)
+              })
+              .catch(() => { /* non-fatal */ })
+          })
+        }).catch(() => { /* non-fatal */ })
+
         // Load community minds published by other users
         fetch('/api/community-minds')
           .then(r => r.json())
           .then(({ minds: communityMinds }) => {
             if (!Array.isArray(communityMinds) || communityMinds.length === 0) return
-            const { minds: currentMinds, conversations: currentConvs } = get()
-            const currentIds = new Set(currentMinds.map((m: Mind) => m.id))
-            const newMinds = communityMinds
-              .filter((m: Mind) => !currentIds.has(m.id))
-              .map((m: Mind) => ({ ...m, type: 'community' as const }))
-            if (newMinds.length === 0) return
-            const newConvs = { ...currentConvs }
-            for (const m of newMinds) { if (!newConvs[m.id]) newConvs[m.id] = [] }
-            set({ minds: [...currentMinds, ...newMinds], conversations: newConvs })
+            mergeMinds(communityMinds.map((m: Mind) => ({ ...m, type: 'community' as const })))
           })
           .catch(() => { /* non-fatal */ })
       },
@@ -160,6 +177,19 @@ export const useAppStore = create<Store>()(
           currentMindId: mind.id,
           appView: 'chat',
         })
+        // Persist to DB for cross-device sync
+        import('../lib/supabaseClient').then(({ supabase }) => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            const token = session?.access_token
+            if (!token) return
+            fetch('/api/user-minds', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(mind),
+            }).catch(() => { /* non-fatal */ })
+          })
+        }).catch(() => { /* non-fatal */ })
+
         if (mind.corpus || mind.brain?.length) {
           import('../lib/vectorStore').then(({ hasChunks }) => {
             hasChunks(mind.id).then(already => {

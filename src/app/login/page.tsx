@@ -5,18 +5,18 @@ import dynamic from 'next/dynamic'
 import { useAppStore } from '@/store/appStore'
 import { supabase } from '@/lib/supabaseClient'
 
-const LandingPage = dynamic(() => import('@/components/landing/LandingPage'), { ssr: false })
+const AuthPage = dynamic(() => import('@/components/app/AuthPage'), { ssr: false })
 const EarlyAccessModal = dynamic(() => import('@/components/modals/EarlyAccessModal'), { ssr: false })
 const Toast = dynamic(() => import('@/components/ui/Toast'), { ssr: false })
 
-export default function Home() {
+export default function LoginRoute() {
   const router = useRouter()
-  const { login, setPage } = useAppStore()
+  const { login, logout, setPage } = useAppStore()
 
   useEffect(() => {
-    setPage('landing')
+    setPage('auth')
 
-    // If already logged in, redirect to /app
+    // If already logged in, go straight to app
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const name = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
@@ -25,11 +25,25 @@ export default function Home() {
         router.replace('/app')
       }
     })
-  }, [login, router, setPage])
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const name = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
+        const email = session.user.email || ''
+        login(name, email)
+        router.replace('/app')
+      }
+      if (event === 'SIGNED_OUT') {
+        logout()
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [login, logout, router, setPage])
 
   return (
     <>
-      <LandingPage />
+      <AuthPage />
       <EarlyAccessModal />
       <Toast />
     </>
