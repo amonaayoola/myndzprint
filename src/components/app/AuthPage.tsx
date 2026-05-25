@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
 import { track } from '@/lib/analytics'
-import { authSignUp, authSignIn } from '@/lib/supabaseClient'
+import { authSignUp, authSignIn, resetPassword } from '@/lib/supabaseClient'
 
 export default function AuthPage() {
   const router = useRouter()
@@ -16,6 +16,8 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [forgotMode, setForgotMode] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   async function submit() {
     setError('')
@@ -68,6 +70,110 @@ export default function AuthPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function submitForgot() {
+    setError('')
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address.'); return
+    }
+    setLoading(true)
+    try {
+      await resetPassword(email.trim())
+      setResetSent(true)
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ── Reset email sent screen ────────────────────────────────────────────────
+  if (resetSent) {
+    return (
+      <div className="page auth active" id="page-auth">
+        <div className="auth-wrap">
+          <div className="spotlight" id="auth-spotlight" />
+          <div className="auth-card" style={{ textAlign: 'center' }}>
+            <div className="auth-logo" style={{ justifyContent: 'center', marginBottom: 24 }}>
+              <Logo size={22} />
+            </div>
+            <div style={{ fontSize: 32, marginBottom: 16 }}>🔑</div>
+            <h1 className="auth-h1" style={{ fontSize: 22 }}>Check your inbox</h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.7, marginTop: 12 }}>
+              We sent a password reset link to <strong>{email}</strong>.<br />
+              Click the link in the email to set a new password.
+            </p>
+            <button
+              className="modal-btn"
+              style={{ marginTop: 28, width: '100%' }}
+              onClick={() => { setResetSent(false); setForgotMode(false); setAuthMode('login') }}
+            >
+              Back to sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Forgot password screen ─────────────────────────────────────────────────
+  if (forgotMode) {
+    return (
+      <div className="page auth active" id="page-auth">
+        <div className="auth-wrap">
+          <div className="spotlight" id="auth-spotlight" />
+          <div className="auth-card">
+            <div className="auth-logo" onClick={() => router.push('/')}>
+              <Logo size={22} />
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, letterSpacing: '0.05em', color: 'var(--text)', lineHeight: 1 }}>
+                Myndz<span style={{ color: 'var(--gold)' }}>print</span>
+              </div>
+            </div>
+
+            <h1 className="auth-h1">Reset your password.</h1>
+            <p className="auth-lede">Enter your email and we&apos;ll send you a link to set a new password.</p>
+
+            {error && (
+              <div style={{ background: 'var(--error-bg)', color: 'var(--error)', fontSize: 13, padding: '10px 14px', borderRadius: 8, marginBottom: 16 }}>
+                {error}
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                className="form-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') void submitForgot() }}
+                disabled={loading}
+              />
+            </div>
+
+            <button
+              className="auth-submit"
+              onClick={() => void submitForgot()}
+              disabled={loading}
+              style={{ opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'Sending…' : 'Send reset link'}
+            </button>
+
+            <div className="auth-switch">
+              <span
+                style={{ cursor: 'pointer', color: 'var(--gold)' }}
+                onClick={() => { setForgotMode(false); setError('') }}
+              >
+                ← Back to sign in
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── Email confirmation pending screen ──────────────────────────────────────
@@ -148,7 +254,17 @@ export default function AuthPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="form-label">Password</label>
+              {isLogin && (
+                <span
+                  style={{ fontSize: 12, color: 'var(--gold)', cursor: 'pointer', marginBottom: 6 }}
+                  onClick={() => { setForgotMode(true); setError('') }}
+                >
+                  Forgot password?
+                </span>
+              )}
+            </div>
             <input
               className="form-input"
               type="password"

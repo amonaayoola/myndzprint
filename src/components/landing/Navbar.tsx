@@ -20,6 +20,7 @@ export default function Navbar() {
         <div className="nav-center">
           <a href="#how">How it works</a>
           <a href="#minds">Minds</a>
+          <a href="#b2b">For Business</a>
         </div>
 
         <div className="nav-actions">
