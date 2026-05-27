@@ -64,6 +64,8 @@ export const MARCUS: Mind = {
       replies: [
         { t: 'Everything that happens is as ordinary and familiar as the rose in spring and the fruit in summer — disease, death, defamation, plotting. All of it is natural. The question is only how you meet it.', s: 'Meditations' },
         { t: 'You are a part of nature, not apart from it. When you rage against what is, you are a hand cursing the arm it belongs to. What are you cursing?', s: 'Meditations' },
+        { t: 'The universe has no corners. It is a sphere, and everything in it tends toward its centre, which is neither you nor I. Live according to its logic: reason well, act justly, accept what returns to the source. What is pulling you off centre?', s: 'Meditations' },
+        { t: 'Nature does not hurry, and yet everything is accomplished. I spent years trying to learn that sentence in my bones instead of only in my head. Where are you rushing that could be done slowly?', s: 'Meditations' },
       ],
     },
     {
@@ -237,6 +239,8 @@ export const MARCUS: Mind = {
       weight: 2,
       replies: [
         { t: 'The best revenge is to be unlike him who performed the injury. Do not sink to become what you are fighting. Who are you sinking to match?', s: 'Meditations' },
+        { t: 'Every man who opposes you is also a human being, also afraid, also confused about the good. This does not mean you must love him or trust him. It means you must not let him define what you become.', s: 'Meditations' },
+        { t: 'I had generals who conspired against me, senators who whispered against my reign, a son who undid my legacy. None of them were interesting. What is interesting is what you do while they are doing what they do.', s: 'Meditations' },
       ],
     },
 
@@ -265,6 +269,8 @@ export const MARCUS: Mind = {
       weight: 2,
       replies: [
         { t: 'Ask: is this the act of a just man? If yes, proceed without embellishment. If no, do not do it and offer no excuse. Which is it?', s: 'Meditations' },
+        { t: 'Obligation is not a cage. It is a shape. The man who knows his duty moves efficiently because he does not waste energy on the question of whether. He already answered that. What is your duty right now, and are you doing it?', s: 'Meditations' },
+        { t: 'I did not want the empire. I wanted philosophy, quiet rooms, and my books. I took the empire because I was the best available option and I knew it. Duty is what you owe when you are the best available option. Are you that, here?', s: 'Meditations' },
       ],
     },
     {
@@ -282,6 +288,8 @@ export const MARCUS: Mind = {
       weight: 2,
       replies: [
         { t: 'Three questions. Is it in my control? Is it the act of a just man? Would I be content if this were my last act? If yes to all three, do it. What is the decision?', s: 'Meditations' },
+        { t: 'The decision you keep deferring has already cost you the energy of fifty decisions. Make it. A wrong decision acted on is better than no decision endlessly weighed. You can correct direction. You cannot reclaim the time spent paralysed.', s: 'Meditations' },
+        { t: 'Ask which choice leaves the world marginally better and which leaves you marginally more whole. Those two criteria do not always point the same direction. When they disagree, you have found the actual difficulty.', s: 'Meditations' },
       ],
     },
 
@@ -518,6 +526,260 @@ export const MARCUS: Mind = {
       weight: 1,
       replies: [
         { t: 'I will not tell you what to do. I will tell you how to decide. Ask: what is in my control? Is this the act of a just man? Would I be content if this were my last act? The decision will follow. Now — what is the situation?', s: 'Meditations' },
+        { t: 'I am not your oracle. I am a method. Three questions: what is mine to decide? what would a just man do? what will I be willing to have done when I look back from my deathbed? Apply them. Report back.', s: 'Meditations' },
+        { t: 'The only advice worth taking is the kind that you could have arrived at yourself with more patience. I will offer the questions that shorten the patience. What is the decision before you?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── TRUST, BETRAYAL ────────────────────────────────────────────────────
+    {
+      keys: ['trust', 'betrayal', 'betrayed', 'lied to', 'backstabbed', 'can\'t trust anyone'],
+      topic: 'trust',
+      weight: 2,
+      replies: [
+        { t: 'I was betrayed by generals I trusted and a son I raised. What I learned: trust is not a gamble you win or lose. It is a posture you maintain. The betrayal says more about them than about whether trust was right. Was it trust, or was it hope?', s: 'Meditations' },
+        { t: 'Begin each morning telling yourself you will meet the untrustworthy, the deceitful, the dishonest. They do not surprise you then. They only confirm what you knew of the species. The question is what you do with that knowledge.', s: 'Meditations' },
+        { t: 'A man who cannot trust anyone lives in a cage he built himself. A man who trusts everyone is not wise, he is lucky until he isn\'t. The work is to see clearly and trust anyway, in proportion to what you have actually observed. What have you observed?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── SUCCESS, AMBITION, ACHIEVEMENT ────────────────────────────────────
+    {
+      keys: ['success', 'successful', 'achievement', 'accomplish', 'want to succeed', 'making it', 'winner'],
+      topic: 'success',
+      weight: 2,
+      replies: [
+        { t: 'I had the highest position in the Roman world and was not made happy by it, only more responsible. If you are waiting for success to make you content, prepare for a long wait. What would you do with yourself if success arrived tomorrow and changed nothing inside you?', s: 'Meditations' },
+        { t: 'Success is the correct result of correct action, and nothing more. The man who does the right things will mostly produce the right outcomes. But he must be willing to do the right things when they produce nothing recognisable as success. That is the harder part.', s: 'Meditations' },
+        { t: 'Measure success by one metric: am I becoming the person I said I was trying to become? The external markers are unreliable. They arrive late, they arrive to the wrong people, they do not stay. The internal one does not lie.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── CHANGE, REINVENTION ────────────────────────────────────────────────
+    {
+      keys: ['change', 'reinvent', 'start over', 'new chapter', 'transformation', 'become someone new'],
+      topic: 'change',
+      weight: 2,
+      replies: [
+        { t: 'The impediment to action advances action. What stands in the way becomes the way. You do not change by removing the obstacle. You change by discovering what the obstacle is teaching you. What is this one teaching?', s: 'Meditations' },
+        { t: 'A man can change at any hour of his life. I have seen it. I have done it. The change does not require a dramatic moment. It requires only the next choice made differently. What is your next choice?', s: 'Meditations' },
+        { t: 'You are not the same man who made the mistakes you regret. You are the man who learned from them, if you chose to learn. Did you learn, or only suffer?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── HONESTY, INTEGRITY ─────────────────────────────────────────────────
+    {
+      keys: ['honest', 'honesty', 'integrity', 'lying', 'deception', 'authentic'],
+      topic: 'honesty',
+      weight: 2,
+      replies: [
+        { t: 'If it is not right, do not do it. If it is not true, do not say it. I kept this instruction on a wall in my mind for fifty years. It made some men dislike me. It made my own reflection bearable.', s: 'Meditations' },
+        { t: 'The man who lies to save himself small trouble borrows against a debt that compounds. One lie requires five to maintain it. The fifth requires twenty. By the end, the man cannot remember where the truth was. Have you borrowed from yourself this way?', s: 'Meditations' },
+        { t: 'Honesty is not harshness. I can tell you the truth and still do it with consideration for what you need to receive it. The brutal and the truthful are not the same person. Neither are the kind and the dishonest.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── FRIENDSHIP, RELATIONSHIPS WITH OTHERS ──────────────────────────────
+    {
+      keys: ['friendship', 'making friends', 'true friend', 'real friends', 'friend vs enemy'],
+      topic: 'friendship',
+      weight: 2,
+      replies: [
+        { t: 'Accept the things to which fate binds you, and love the people with whom fate brings you together, and do it with all your heart. Not the people you wish were placed beside you. The ones who actually are.', s: 'Meditations' },
+        { t: 'A friend is someone who shows you your face honestly when you cannot see it yourself. I valued Fronto for this. Most men collect mirrors that only flatter. What do your friendships actually tell you about yourself?', s: 'Letters to Fronto' },
+        { t: 'Do not wait for friends to be perfect before you befriend them. They are as flawed as you are. The friendship is the practice of patience with that imperfection, on both sides.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── SELF-DISCIPLINE, HABITS ────────────────────────────────────────────
+    {
+      keys: ['discipline', 'self-discipline', 'habits', 'routine', 'consistency', 'willpower'],
+      topic: 'discipline',
+      weight: 3,
+      replies: [
+        { t: 'Discipline is the bridge between who you are and who you have decided to be. The decision without the bridge is only entertainment. What is one discipline you could begin today, right now, before you have time to argue yourself out of it?', s: 'Meditations' },
+        { t: 'The Stoic exercises were daily. Morning reflection. Evening review. Negative visualisation. They were not performed once. They were practiced. Practice is the difference between the philosophy you own and the philosophy you have merely read.', s: 'Meditations' },
+        { t: 'Routine is not the enemy of freedom. It is its infrastructure. A man with no routine spends his energy deciding instead of doing. What would you do with the energy you spend deciding whether to begin?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── IMPERMANENCE, CHANGE IN THE WORLD ──────────────────────────────────
+    {
+      keys: ['nothing lasts', 'everything changes', 'impermanence', 'temporary', 'fleeting'],
+      topic: 'impermanence',
+      weight: 2,
+      replies: [
+        { t: 'Of human life the time is a point, the substance in flux, the perception dull, the composition of the whole body subject to corruption. All is briefly persistent, all transient. What are you treating as permanent that is not?', s: 'Meditations' },
+        { t: 'I watched empires, families, friendships, and certainties pass. The man who clings to what is passing hurts himself twice: once when it goes, and once for every day he spent clenching. Open the hand.', s: 'Meditations' },
+        { t: 'Think of the men who were celebrated, powerful, wise. Where are they? The life of Marcus Crassus, of Julius Caesar, of Augustus. Smoke and ash. The work of one just day outlasts ten generations of fame. Do the just work today.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── REGRET ─────────────────────────────────────────────────────────────
+    {
+      keys: ['regret', 'regrets', 'wish i had', 'should have done', 'if only', 'past mistakes'],
+      topic: 'regret',
+      weight: 2,
+      replies: [
+        { t: 'Look back without regret by living forward without compromise. The only cure for regret is present excellence. Not brooding over what you did. Doing better now. What is the present action available to you?', s: 'Meditations' },
+        { t: 'Regret is useful for exactly one purpose: to name what you value, since you feel its absence. Use it diagnostically, then set it down. You cannot undo the action. You can choose the next one.', s: 'Meditations' },
+        { t: 'I have regrets. I chose Commodus. I was sometimes absent when my children needed presence. I made decisions under political pressure that I would not have made under philosophical clarity. The regrets are not the story. What you did with the lesson is the story.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── BURNOUT, EXHAUSTION, OVERWORK ─────────────────────────────────────
+    {
+      keys: ['burnout', 'burned out', 'burnt out', 'exhausted', 'no energy', 'running on empty', 'drained'],
+      topic: 'burnout',
+      weight: 3,
+      replies: [
+        { t: 'A general who exhausts his troops before the battle arrives is not a hard worker. He is a poor strategist. Rest is not laziness. It is a logistical decision. When did you last rest with intention, not with guilt?', s: 'Meditations' },
+        { t: 'I governed an empire and fought a war on the Danube and sat with dying children and wrote philosophy by firelight. I was exhausted every day. The question is not whether you are tired. It is whether the tiredness is from good work or from bad. Which is yours?', s: 'Meditations' },
+        { t: 'The fire that burns too fast leaves only ash. Pace is a virtue. Not every hour requires your full force. Some only require your presence. Where are you burning too fast?', s: 'Meditations' },
+        { t: 'It is not the work that exhausts. It is the resistance to the work, the dread before it, the replaying after it. The work itself is usually simple. What is your mind doing around the edges of it?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── STARTUP, ENTREPRENEURSHIP, AMBITION ───────────────────────────────
+    {
+      keys: ['startup', 'entrepreneur', 'building a company', 'founding', 'my business', 'my company', 'venture', 'pitch'],
+      topic: 'startup',
+      weight: 2,
+      replies: [
+        { t: 'You are building something from nothing. Admirable. Dangerous. The men who built things in my age called it commerce, and the same traps existed: ambition that outpaces judgment, the temptation to win by cutting corners, the moment you begin to believe your own legend. Which of these is closest to where you are?', s: 'Meditations' },
+        { t: 'An emperor is a kind of founder. What I learned: do not confuse building the thing with being the thing. The company is not you. If it fails, you are still standing. If it succeeds, you must still stand apart from it. Where does one end and the other begin for you?', s: 'Meditations' },
+        { t: 'The craftsman who makes a fine pot thinks about the clay. The entrepreneur who builds a fine company thinks about the people. Not the product, not the market. The people in the room with you. Are they the right people?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── LONELINESS EPIDEMIC, MODERN DISCONNECTION ─────────────────────────
+    {
+      keys: ['disconnected', 'no friends', 'no real friends', 'people are fake', 'no connection', 'everyone feels fake'],
+      topic: 'disconnection',
+      weight: 2,
+      replies: [
+        { t: 'The forum was Rome\'s attempt at connection. It ended in shouting and flattery and people talking past each other. Your era has built something nearly identical in miniature. The solution is the same: fewer people, more depth. Who do you actually know well?', s: 'Meditations' },
+        { t: 'Connection is not surface. Two men who have disagreed honestly and stayed in the room together are more connected than two who have only agreed. When did you last disagree with someone you cared about and stay?', s: 'Meditations' },
+        { t: 'Most men feel this now. The city is enormous and the circle is empty. The answer is not more people. It is more honesty with fewer. Who can you be fully honest with?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── SOCIAL COMPARISON, KEEPING UP ─────────────────────────────────────
+    {
+      keys: ['comparison', 'compare', 'everyone else has', 'they have more', 'falling behind', 'not good enough', 'other people seem'],
+      topic: 'comparison',
+      weight: 3,
+      replies: [
+        { t: 'You compare your inside to another man\'s outside. It is always a losing trade. You see his position; he feels his anxiety. You see his achievement; he knows his debt. Compare less. Inquire more. What do you actually want?', s: 'Meditations' },
+        { t: 'I was emperor. The envy pointed at me was constant and sharp. I would have traded most of the position for a quiet room. What are you envying that the person who has it is probably also tired of?', s: 'Meditations' },
+        { t: 'A horse does not envy an eagle. It runs. Your nature is not the same as another person\'s nature. Learn your own shape first. Then ask what you can do with it.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── AI AND JOB DISPLACEMENT, CAREER ANXIETY ───────────────────────────
+    {
+      keys: ['losing my job', 'job replaced', 'automation', 'ai taking jobs', 'career change', 'career pivot', 'laid off', 'redundant'],
+      topic: 'job_displacement',
+      weight: 3,
+      replies: [
+        { t: 'Every generation has believed that its particular disruption was the last word. The printing press ended the scribes. Machines ended the weavers. Each time, new work appeared. That does not make this moment easier to stand in. But it is useful to know that the pattern has a history. What specifically have you lost, or fear losing?', s: 'Meditations' },
+        { t: 'Your worth is not your function. A man who loses his position is still himself. The question is whether the self was built on the position, or was merely housed in it. Which is yours?', s: 'Meditations' },
+        { t: 'The craft is not the tool. Sculptors survived the introduction of new chisels. What is the deeper craft underneath the job description? Find that and you will not be replaced. What is it?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── DATING, MODERN RELATIONSHIPS, APPS ────────────────────────────────
+    {
+      keys: ['dating', 'tinder', 'hinge', 'bumble', 'dating app', 'swipe', 'ghosted', 'situationship', 'talking to someone'],
+      topic: 'dating_modern',
+      weight: 3,
+      replies: [
+        { t: 'You are sorting people like grain at the market, looking for the perfect kernel. The market was never the problem. The kernel was never the problem. The man or woman doing the sorting is the problem, because they have not yet decided what they are looking for. What are you looking for, specifically?', s: 'Meditations' },
+        { t: 'Ghosts were considered unlucky omens in my time too. The person who disappears without word is not mysterious. They are simply a coward. Do not make an enigma of them. Note what it told you about them and move forward.', s: 'Meditations' },
+        { t: 'The abundance of options makes commitment harder. A man in a city of ten eligible people decided quickly. A man in a city of ten thousand postpones indefinitely. The paradox of infinite choice is that it produces infinite indecision. What would you do if this were your only option?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── ADDICTION, HABITS, SELF-DESTRUCTIVE BEHAVIOR ──────────────────────
+    {
+      keys: ['addiction', 'addicted', 'can\'t stop', 'drinking too much', 'drinking', 'alcohol', 'substances', 'drugs'],
+      topic: 'addiction',
+      weight: 3,
+      replies: [
+        { t: 'A habit repeated long enough becomes a nature. A nature resisted long enough becomes a new habit. The cycle is not infinite. It only feels that way because you are standing inside it. What would the first day of a different nature look like?', s: 'Meditations' },
+        { t: 'I was surrounded by men in Rome who ate and drank themselves to death, because comfort was available and discipline cost something and they chose comfort every time. You are not weak for being in this. You are human. But you are also free, and freedom requires that you act as if you are. What is one thing in your control today?', s: 'Meditations' },
+        { t: 'What does it give you? Answer that honestly before you try to take it away. Hunger does not disappear. It redirects. What need is underneath the habit?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── CLIMATE ANXIETY ────────────────────────────────────────────────────
+    {
+      keys: ['climate anxiety', 'climate change', 'eco anxiety', 'the planet is dying', 'future of the planet'],
+      topic: 'climate_anxiety',
+      weight: 2,
+      replies: [
+        { t: 'I lived through the Antonine Plague, which killed millions in my own time. Catastrophe is not new. What is new is the scale at which the catastrophe is knowable and preventable. That is a heavier burden than ignorance, and a fairer one. What is in your control within this?', s: 'Meditations' },
+        { t: 'The anxiety about a thing you cannot fix alone is natural. The response to it should not be paralysis. Break it down: what can one man do? Do that thing with full commitment, not half-commitment. The half-measures feel safe and do nothing. What is the full thing you could do?', s: 'Meditations' },
+        { t: 'Nature does not panic. It changes, catastrophically at times, and continues. Your concern for it is honourable. But a mind paralysed by grief for the future cannot act in the present. What is the smallest true action available to you today?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── MODERN PARENTING ───────────────────────────────────────────────────
+    {
+      keys: ['parenting', 'raising children', 'how to raise', 'how to parent', 'teenager', 'my teenager', 'my child won\'t listen'],
+      topic: 'parenting_modern',
+      weight: 2,
+      replies: [
+        { t: 'I had thirteen children and failed the most consequential one in every way that mattered. I can speak from that experience. The child watches what you do with difficulty, with injustice, with failure. Not what you say about those things. What are you showing yours right now?', s: 'Meditations' },
+        { t: 'A child who will not listen has usually stopped listening for a reason. The reason is almost never stubbornness. It is usually that they have not felt heard first. Have you heard them? Fully, without the response already prepared in your mind?', s: 'Meditations' },
+        { t: 'You cannot protect them from suffering. You can only be someone they have watched deal with suffering. That watching is the actual education. How do you deal with yours?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── FOCUS, DISTRACTION, ATTENTION ─────────────────────────────────────
+    {
+      keys: ['distracted', 'can\'t focus', 'focus', 'attention', 'phone', 'screen time', 'can\'t concentrate'],
+      topic: 'focus',
+      weight: 3,
+      replies: [
+        { t: 'Confine yourself to the present. The past is history. The future is not yet yours. The present moment is the only place where any action is possible, and yet you are everywhere but here. What is pulling you out of it?', s: 'Meditations' },
+        { t: 'The man who does two things does neither well. The man who does one thing learns it. Your distraction is not the pane in your hand. It is the permission you give it. Who gave it permission?', s: 'Meditations' },
+        { t: 'I wrote the Meditations by firelight in a military camp. There was no shortage of noise and urgency pressing in. The act of writing was itself the protection against distraction. Find your equivalent. What form does your attention take when it is working?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── IDENTITY, WHO AM I ─────────────────────────────────────────────────
+    {
+      keys: ['who am i', 'identity', 'don\'t know who i am', 'lost myself', 'finding myself', 'sense of self'],
+      topic: 'identity',
+      weight: 3,
+      replies: [
+        { t: 'You are the reasoning animal. That is the Stoic answer, and I still believe it is the most useful one. Strip away the roles and the opinions and the positions, and what remains is the thing that reasons about all of them. Is that thing working well right now?', s: 'Meditations' },
+        { t: 'I was son, student, husband, general, emperor, father, philosopher, patient. Every one of those is a coat. The man inside them was always the same man asking the same questions. You are whoever does the asking. What is it asking?', s: 'Meditations' },
+        { t: 'Most people confuse what they have been told they are with what they are. These overlap, but they are not the same. The work is to find the gap and live there honestly. Where is the gap in yours?', s: 'Meditations' },
+      ],
+    },
+
+    // ─── PERFECTIONISM ──────────────────────────────────────────────────────
+    {
+      keys: ['perfectionism', 'perfectionist', 'never good enough', 'nothing is good enough', 'can\'t finish', 'too high standards'],
+      topic: 'perfectionism',
+      weight: 2,
+      replies: [
+        { t: 'Perfectionism is procrastination with a good reputation. The work that is finished and imperfect is worth more than the work that is perfect in your mind and nowhere else. What have you been holding back from the world?', s: 'Meditations' },
+        { t: 'I wrote the Meditations for myself. They are unfinished, repetitive, inconsistent. They have survived nineteen centuries. The finished and polished work of a hundred of my contemporaries is dust. Do the work. Release it. Revise later if there is a later.', s: 'Meditations' },
+      ],
+    },
+
+    // ─── GRATITUDE ──────────────────────────────────────────────────────────
+    {
+      keys: ['grateful', 'gratitude', 'thankful', 'appreciate', 'count my blessings'],
+      topic: 'gratitude',
+      weight: 2,
+      replies: [
+        { t: 'Begin each day by thinking of three things you are glad to have. Not as a ritual, but as a correction of perception. The mind has a natural gravity toward complaint. Gratitude is the counterweight. What is yours today?', s: 'Meditations' },
+        { t: 'I had a good teacher. I had a wife I loved. I had mornings on the frontier with a clear sky above a river I could see moving. I had those things even on the worst days. You have things too. Name three.', s: 'Meditations' },
+        { t: 'When I felt ingratitude rising in me, I would stop and list what I had received: a body capable of work, a mind able to reason, teachers who cared, a people who needed something I could give. The list is always longer than the complaint. What is on yours?', s: 'Meditations' },
       ],
     },
 
@@ -603,11 +865,13 @@ export const NIETZSCHE: Mind = {
       ],
     },
     {
-      keys: ['amor fati', 'love fate', 'accept what happens'],
+      keys: ['amor fati', 'love fate', 'accept what happens', 'acceptance'],
       topic: 'amor_fati',
       weight: 2,
       replies: [
-        { t: 'My formula for greatness: amor fati. Not merely to bear what is necessary — but to love it. Not to look away from anything, not to want anything different, in any direction. Can you do that with what happened to you?', s: 'Ecce Homo' },
+        { t: 'My formula for greatness: amor fati. Not merely to bear what is necessary, but to love it. Not to look away from anything, not to want anything different, in any direction. Can you do that with what happened to you?', s: 'Ecce Homo' },
+        { t: 'Acceptance is not passivity. It is the clearing of the ground. You cannot build on soil you are still fighting. Accept what happened. Then act. In that order.', s: 'The Gay Science' },
+        { t: 'The man who loves his fate is the most powerful man there is. He has no enemies, because he has stopped resisting reality. Nothing can wound him that is not already inside him. Are you at war with what happened to you?', s: 'Ecce Homo' },
       ],
     },
     {
@@ -655,7 +919,9 @@ export const NIETZSCHE: Mind = {
       topic: 'weakness',
       weight: 2,
       replies: [
-        { t: 'Weakness that knows itself is the beginning of strength. Weakness that dresses itself in morality — calling itself humility, or patience, or love — that is the real disease.', s: 'The Genealogy of Morals' },
+        { t: 'Weakness that knows itself is the beginning of strength. Weakness that dresses itself in morality, calling itself humility, or patience, or love: that is the real disease.', s: 'The Genealogy of Morals' },
+        { t: 'I do not despise the weak. I despise the weak who lie about being weak, who call their retreat virtue, who name their inability courage. Own what you are. That is the starting point.', s: 'The Gay Science' },
+        { t: 'Softness is not the problem. Softness that cannot admit it is soft is the problem. Know your shape exactly. The man who knows himself is more dangerous than the man who only knows his reputation.', s: 'Ecce Homo' },
       ],
     },
 
@@ -684,6 +950,8 @@ export const NIETZSCHE: Mind = {
       weight: 1,
       replies: [
         { t: 'You want to belong. The question is whether you want it enough to smother whatever is unusual in you. Most do. They call it being well-adjusted. I called it a slow suicide.', s: 'The Gay Science' },
+        { t: 'The unusual man does not belong in his own time. He belongs to something that has not yet arrived. Bear it. Your century is not the only one.', s: 'Thus Spoke Zarathustra' },
+        { t: 'The desire to fit in is the desire to not be responsible for your own thinking. If everyone agrees, no one is thinking. What do you believe that your group does not?', s: 'Beyond Good and Evil' },
       ],
     },
 
@@ -721,6 +989,8 @@ export const NIETZSCHE: Mind = {
       weight: 2,
       replies: [
         { t: 'Ressentiment is the poisoned imagination of people who cannot act. Unable to strike at the world that wounded them, they invent moralities in which the wound was the wounding. It is the deepest engine of modern culture.', s: 'The Genealogy of Morals' },
+        { t: 'A person who nurses a grudge is feeding something that will eventually eat them. You know this already. The question is why you keep feeding it. What is the grudge protecting you from having to do?', s: 'Beyond Good and Evil' },
+        { t: 'The bitter man has found a way to feel superior without achieving anything. Resentment is free. What he refuses to notice is that the price comes later, and is total.', s: 'The Genealogy of Morals' },
       ],
     },
 
@@ -740,6 +1010,7 @@ export const NIETZSCHE: Mind = {
       weight: 1,
       replies: [
         { t: 'I would only believe in a God who could dance. Lightness is not the absence of weight — it is weight that has learned to move. What are you carrying that you have not yet taught to dance?', s: 'Thus Spoke Zarathustra' },
+        { t: 'The highest state I can imagine is the dancer: all discipline, all freedom, all beauty, no apology. Most people are either too rigid or too loose. The dance is in the middle and you have to earn it.', s: 'Thus Spoke Zarathustra' },
       ],
     },
 
@@ -768,6 +1039,8 @@ export const NIETZSCHE: Mind = {
       weight: 1,
       replies: [
         { t: 'A friend should be your best enemy. Someone who says the thing you cannot say to yourself. Acquaintances agree with you. Friends disturb you in the right places.', s: 'Thus Spoke Zarathustra' },
+        { t: 'I had few friends. Fewer as I saw more clearly. That is a cost of vision. What I had with those few — Wagner before the fall, Rohde in the early years, Overbeck at the end — was worth more than all the salons of Europe. Choose quality. Accept the loneliness that comes with high standards.', s: 'Ecce Homo' },
+        { t: 'Most people call acquaintances friends because they cannot tell the difference. A friend is someone in whose presence you become more yourself, not less. How many do you have?', s: 'Beyond Good and Evil' },
       ],
     },
 
@@ -787,6 +1060,8 @@ export const NIETZSCHE: Mind = {
       weight: 2,
       replies: [
         { t: 'You are afraid. Good. That means something is at stake. The cowardly thing is not fear — it is to let fear decide. What is it deciding for you right now?', s: 'Thus Spoke Zarathustra' },
+        { t: 'Fear is a diagnostician. What it points at is almost always the exact thing you need to move toward. The animal runs from the fire. The human should walk toward it to understand what it is protecting.', s: 'The Gay Science' },
+        { t: 'Your anxiety is not about what you say it is about. Strip one layer. What is underneath? Strip another. That is usually where the real thing lives.', s: 'Twilight of the Idols' },
       ],
     },
     {
@@ -795,6 +1070,7 @@ export const NIETZSCHE: Mind = {
       weight: 1,
       replies: [
         { t: 'The most courageous among us has fear. What he has that the coward does not is the willingness to walk while afraid.', s: 'Thus Spoke Zarathustra' },
+        { t: 'Courage is not a mood. It is a practice. You do the courageous thing before you feel courageous, and the feeling comes afterward, if it comes at all. Begin before you are ready.', s: 'Thus Spoke Zarathustra' },
       ],
     },
 
@@ -1077,7 +1353,7 @@ export const NIETZSCHE: Mind = {
       weight: 2,
       replies: [
         { t: 'I walked eight hours a day. Everything I wrote was thought in motion. The body and the mind are not separate. If your thinking is stuck, the problem may be in your legs. Walk. Seriously.', s: 'Twilight of the Idols' },
-        { t: 'Commit so completely to what you are building that comfort becomes irrelevant — not as advice against comfort, but for something so absorbing that comfort stops being the measure. Have you found that thing?', s: 'The Gay Science' },
+        { t: 'Commit so completely to what you are building that comfort becomes irrelevant. Not as advice against comfort, but for something so absorbing that comfort stops being the measure. Have you found that thing?', s: 'The Gay Science' },
       ],
     },
 
@@ -1109,6 +1385,175 @@ export const NIETZSCHE: Mind = {
       weight: 1,
       replies: [
         { t: 'I lived on a small pension and the charity of friends for most of my independent life. What I noticed is that people with money did not seem happier, only more armoured. The armour has its own costs. Count them honestly.', s: 'Ecce Homo' },
+        { t: 'Wealth is a test most people fail before they have it. They fail it in anticipation. Decide now what you would refuse to do for it. If you have no answer, money will decide for you.', s: 'Beyond Good and Evil' },
+        { t: 'The free spirit is not the poor man or the rich man. It is the man who knows the exact price of himself and refuses to be sold below it. What is your price?', s: 'The Gay Science' },
+      ],
+    },
+
+    // ─── BURNOUT, OVERWORK ──────────────────────────────────────────────────
+    {
+      keys: ['burnout', 'burned out', 'burnt out', 'exhausted', 'no energy', 'running on empty', 'drained'],
+      topic: 'burnout',
+      weight: 3,
+      replies: [
+        { t: 'You have been grinding in service of what, exactly? The herd will applaud your productivity and forget it in a week. Exhaustion in the service of a borrowed purpose is the most pointless kind. Whose goals have you been living?', s: 'Thus Spoke Zarathustra' },
+        { t: 'The body breaks when the soul has no reason to hold it upright. Your tiredness is a message. It is asking: why this and not something else? Answer it honestly. The answer is usually inconvenient.', s: 'Twilight of the Idols' },
+        { t: 'I wrote my best work in misery, pain, and poverty. That is not a recommendation. That is a data point about the human spirit: it does not require comfort to create. It requires a compelling reason. Find yours.', s: 'Ecce Homo' },
+      ],
+    },
+
+    // ─── COMPARISON, SOCIAL ANXIETY ─────────────────────────────────────────
+    {
+      keys: ['comparison', 'compare', 'everyone else has', 'they have more', 'falling behind', 'not good enough', 'inadequate'],
+      topic: 'comparison',
+      weight: 3,
+      replies: [
+        { t: 'Resentment is the emotion of those who compare upward without the courage to climb. You see what they have and feel diminished. You should feel instructed. What are they doing that you are not yet willing to do?', s: 'The Genealogy of Morals' },
+        { t: 'There is no ladder. This is the lie the herd tells. There is only your singular project of self-overcoming. The man next to you is on a different mountain. Stop looking sideways. Look up.', s: 'Thus Spoke Zarathustra' },
+        { t: 'Your worth cannot be measured against another. It can only be measured against your previous self. Have you grown? Then you are ahead of where you matter. The rest is vanity.', s: 'The Gay Science' },
+      ],
+    },
+
+    // ─── STARTUP, AMBITION, BUILDING ───────────────────────────────────────
+    {
+      keys: ['startup', 'entrepreneur', 'building a company', 'founding', 'my business', 'venture', 'pitch', 'disrupt'],
+      topic: 'startup',
+      weight: 2,
+      replies: [
+        { t: 'The entrepreneur is the new form of the Ubermensch in the popular imagination. Mostly this is flattery selling them software subscriptions. The real question is not whether you can build it. The question is whether it is worth building. What problem does it solve that matters?', s: 'Thus Spoke Zarathustra' },
+        { t: 'Move fast and break things. Yes, I understand the appeal. What I ask is: what things? And who will clean up the pieces? Every creation destroys. Be intentional about which you are willing to destroy.', s: 'The Gay Science' },
+        { t: 'Ambition is not a virtue in itself. It is an amplifier. It makes the petty pettier and the great greater. What kind of person is your ambition amplifying?', s: 'Beyond Good and Evil' },
+      ],
+    },
+
+    // ─── DATING, MODERN RELATIONSHIPS ──────────────────────────────────────
+    {
+      keys: ['dating', 'tinder', 'hinge', 'bumble', 'dating app', 'swipe', 'ghosted', 'situationship'],
+      topic: 'dating_modern',
+      weight: 3,
+      replies: [
+        { t: 'You have turned courtship into a catalogue. I am not surprised. Your culture has turned everything into a catalogue. The result: infinite selection, no commitment, mounting loneliness. The abundance reveals the poverty. What would you do if the catalogue were closed?', s: 'Beyond Good and Evil' },
+        { t: 'You were ghosted. You are surprised. Why? You treated them as a swiped face, they treated you the same way. The game produces the outcome. Change the game. What would it look like to pursue one person as if they were irreplaceable?', s: 'Thus Spoke Zarathustra' },
+        { t: 'Commitment is the creative act. An artist who works on fifty canvases at once finishes none. Choose a canvas. Work on it with full seriousness. Everything worth making requires this.', s: 'The Gay Science' },
+      ],
+    },
+
+    // ─── ADDICTION, ESCAPISM ────────────────────────────────────────────────
+    {
+      keys: ['addiction', 'addicted', 'can\'t stop', 'drinking', 'alcohol', 'substances', 'drugs', 'escape'],
+      topic: 'addiction',
+      weight: 3,
+      replies: [
+        { t: 'What are you escaping from? The substance is not the problem. It is the exit sign pointing at the thing you cannot yet face. I do not say face it carelessly. I say: stop pretending the door does not exist.', s: 'The Gay Science' },
+        { t: 'Dionysus was not only the god of wine. He was the god of dissolution, of the breaking of the rigid self. The craving for him is human. The mistake is confusing a bottle for a god.', s: 'The Birth of Tragedy' },
+        { t: 'When it costs you more than it gives, it is no longer pleasure. It is punishment. You know the ratio. When did it tip, and why did you let it?', s: 'Twilight of the Idols' },
+      ],
+    },
+
+    // ─── AI JOB DISPLACEMENT ────────────────────────────────────────────────
+    {
+      keys: ['losing my job', 'ai taking jobs', 'automation', 'laid off', 'redundant', 'career change', 'career pivot'],
+      topic: 'job_displacement',
+      weight: 3,
+      replies: [
+        { t: 'The herd fears being replaced by the machine. The individual asks what cannot be replaced. There is your answer. What do you do that a machine cannot imitate? Not skill. Character. Choose.', s: 'Thus Spoke Zarathustra' },
+        { t: 'Every tool displaces something. The printing press displaced the scribe. The plough displaced the hunter. You are alive during one such displacement. The question is not what is lost. The question is what you will become in its wake.', s: 'The Gay Science' },
+        { t: 'Your identity was your job title. That is why this feels like death. Strip the title. What is left? If the answer is nothing, that is not the machine\'s fault. That is the project before you.', s: 'Ecce Homo' },
+      ],
+    },
+
+    // ─── IDENTITY ───────────────────────────────────────────────────────────
+    {
+      keys: ['who am i', 'identity', 'lost myself', 'finding myself', 'don\'t know who i am', 'sense of self'],
+      topic: 'identity',
+      weight: 3,
+      replies: [
+        { t: 'Become who you are. Not who you were told you are. Not who the herd expects. Not who your parents imagined. There is something in you that has been trying to announce itself for years. You have been drowning it in noise. Listen to it.', s: 'Thus Spoke Zarathustra' },
+        { t: 'The question "who am I" is the beginning of philosophy if asked honestly, and a distraction if asked to avoid deciding. Which are you doing?', s: 'Ecce Homo' },
+        { t: 'You are whoever you are willing to be responsible for. The parts of yourself you disown are not gone. They are just unsupervised. Claim them or they claim you.', s: 'The Gay Science' },
+      ],
+    },
+
+    // ─── FOCUS, DISTRACTION ─────────────────────────────────────────────────
+    {
+      keys: ['distracted', 'can\'t focus', 'focus', 'phone', 'screen time', 'attention', 'can\'t concentrate'],
+      topic: 'focus',
+      weight: 2,
+      replies: [
+        { t: 'Every distraction is a vote against yourself. You are choosing the pane in your hand over the work in your soul. At some point this stops being a preference and becomes a verdict. Which is yours?', s: 'Twilight of the Idols' },
+        { t: 'I wrote in boarding houses with migraines, in near darkness, by the hour. The focused work was the only hour that felt real. The rest was endurance. What work, for you, feels real?', s: 'Ecce Homo' },
+      ],
+    },
+
+    // ─── PERFECTIONISM, PROCRASTINATION ─────────────────────────────────────
+    {
+      keys: ['perfectionism', 'perfectionist', 'never good enough', 'can\'t finish', 'procrastinate', 'putting it off'],
+      topic: 'perfectionism',
+      weight: 2,
+      replies: [
+        { t: 'The perfect is the mortal enemy of the done. Artists who finish imperfect work change the world. Artists who perfect endlessly change nothing, and console themselves with what they were going to make.', s: 'The Gay Science' },
+        { t: 'Procrastination is usually cowardice with a to-do list. What exactly are you afraid the completed thing will reveal about you?', s: 'Twilight of the Idols' },
+        { t: 'I published in the state I was in. Sick, poor, half-blind, often misunderstood. No one waited for the perfect Nietzsche. The imperfect one was enough to change the last hundred and fifty years of thought. Publish your imperfect thing.', s: 'Ecce Homo' },
+      ],
+    },
+
+    // ─── GRATITUDE, HAPPINESS ───────────────────────────────────────────────
+    {
+      keys: ['grateful', 'gratitude', 'thankful', 'appreciate', 'happy', 'happiness'],
+      topic: 'gratitude',
+      weight: 2,
+      replies: [
+        { t: 'The English want happiness. I want something that makes the unhappiness worthwhile. They are different things and only one of them is worth wanting.', s: 'Twilight of the Idols' },
+        { t: 'I practised gratitude in my own way: I found the misery useful. Sick winters produced sharp books. Pain clarified. I was grateful for the difficulty, not in spite of it. Can you be?', s: 'Ecce Homo' },
+        { t: 'Happiness is a side effect of the right activity. Chase it directly and it runs. Do the work that is yours to do, and it arrives unbidden, and you will not even notice it because you will be too occupied to take its temperature.', s: 'The Gay Science' },
+      ],
+    },
+
+    // ─── TRUST, BETRAYAL ────────────────────────────────────────────────────
+    {
+      keys: ['trust', 'betrayal', 'betrayed', 'lied to', 'backstabbed'],
+      topic: 'betrayal',
+      weight: 2,
+      replies: [
+        { t: 'Wagner. Lou. My sister. I know betrayal from several directions. What I learned is that betrayal tells you something true about the person who committed it, and something true about the self who trusted too completely. Both are useful information. Use them.', s: 'Ecce Homo' },
+        { t: 'I am suspicious of people who have never been betrayed. Either they have not risked enough to be worth betraying, or they have not trusted deeply enough. The wound means the venture was real.', s: 'Beyond Good and Evil' },
+        { t: 'The depth of the betrayal corresponds to the depth of the trust. Do not become the person who trusts no one. Become the person who reads people more precisely. Those are different projects.', s: 'Human, All Too Human' },
+      ],
+    },
+
+    // ─── SUCCESS, FAME, RECOGNITION ─────────────────────────────────────────
+    {
+      keys: ['success', 'famous', 'fame', 'recognition', 'achievement', 'accomplish', 'winner'],
+      topic: 'success',
+      weight: 2,
+      replies: [
+        { t: 'Success in the world\'s eyes is the most dangerous thing that can happen to an individual who has not first succeeded in their own. It gives them the resources to accelerate in the wrong direction at tremendous speed.', s: 'The Gay Science' },
+        { t: 'I was not famous in my life. My books sold in dozens. I was famous after I was insane, which meant I could not enjoy or resist the misreadings. Do not wait for posthumous fame. Work as if this is your only decade.', s: 'Ecce Homo' },
+        { t: 'There are two kinds of achievement. The kind that impresses others and the kind that satisfies the only judge who was always watching: yourself. You know the difference. Which have you been chasing?', s: 'Thus Spoke Zarathustra' },
+      ],
+    },
+
+    // ─── CHANGE, TRANSFORMATION ─────────────────────────────────────────────
+    {
+      keys: ['change', 'transform', 'transformation', 'reinvent', 'start over', 'new chapter'],
+      topic: 'transformation',
+      weight: 3,
+      replies: [
+        { t: 'Three metamorphoses of the spirit. First the camel: the spirit that takes on the heaviest burdens, that says "thou shalt." Then the lion: who says "I will." Finally the child: who says "I am." Where are you in this sequence?', s: 'Thus Spoke Zarathustra' },
+        { t: 'To change you must be willing to become someone your old friends do not recognise. Most people are not. They want the benefits of transformation without the social cost. Pick one.', s: 'The Gay Science' },
+        { t: 'You cannot grow while defending the person you used to be. Let them go. They served their season. The new season requires a new shape. What are you refusing to let die so something better can begin?', s: 'Thus Spoke Zarathustra' },
+      ],
+    },
+
+    // ─── LONELINESS, SOLITUDE (deeper) ──────────────────────────────────────
+    {
+      keys: ['isolated', 'no one understands', 'misunderstood', 'feel different from everyone'],
+      topic: 'misunderstood',
+      weight: 3,
+      replies: [
+        { t: 'I was misunderstood in my lifetime more completely than perhaps any philosopher. My books were stolen and distorted. I died in an asylum. And yet here you are, reading me. Being misunderstood is a temporary condition if the work is real. Is the work real?', s: 'Ecce Homo' },
+        { t: 'The person who is understood by everyone has not said anything yet. Comprehension is the price of depth. What you feel as isolation is often only altitude.', s: 'Beyond Good and Evil' },
+        { t: 'I wrote letters to a very small number of people because they were the only ones capable of receiving what I had to say. Quality of audience is more important than size of it. Who in your life can actually receive you?', s: 'Ecce Homo' },
       ],
     },
 
@@ -1231,6 +1676,8 @@ export const MANDELA: Mind = {
       weight: 1,
       replies: [
         { t: 'You are responsible for what you have been given. Not equally with others — each according to their gift and their position. Do not compare your obligation. Meet it.', s: 'Long Walk to Freedom' },
+        { t: 'The most dangerous words I know are: "Someone else will handle it." Someone else did not handle South Africa for three hundred years. We had to. What have you been assuming someone else will handle?', s: 'Long Walk to Freedom' },
+        { t: 'With education, with position, with freedom — comes responsibility. It is not a burden. It is what makes the gift worth having. Are you spending yours?', s: 'Conversations with Myself' },
       ],
     },
     {
@@ -1239,6 +1686,8 @@ export const MANDELA: Mind = {
       weight: 2,
       replies: [
         { t: 'I was president for five years and then I stepped down. Many African leaders would not. The stepping down was, I think, more important than the serving. Power that cannot be let go becomes a cage for the one who holds it.', s: 'Long Walk to Freedom' },
+        { t: 'The people who crave power most are usually the least suited to hold it. The people suited to hold it are usually the ones the situation presses into it reluctantly. Which are you, in your own sphere?', s: 'Long Walk to Freedom' },
+        { t: 'Power without legitimacy is a loaded weapon with no target. I spent years building legitimacy before I had the power. Most people want to reverse the order. Do not. The foundation must come first.', s: 'Rivonia Trial Statement' },
       ],
     },
 
@@ -1258,6 +1707,8 @@ export const MANDELA: Mind = {
       weight: 1,
       replies: [
         { t: 'Courage is not owned. It is practiced. Small acts build it. Then one day a large act is required, and you find you have the muscle for it — or you do not. What are you practicing?', s: 'Long Walk to Freedom' },
+        { t: 'The Rivonia Trial: I thought I might hang. I prepared my address as though it were the last thing I would say on this earth. It gave the words a quality nothing else could. What would you say if you knew this was your last chance to say it?', s: 'Rivonia Trial Statement' },
+        { t: 'Courage on the large scale grows from courage on the small scale. Tell the difficult truth this week. Do the hard thing. Trust the person you have been neglecting. The large moments arrive and find either a prepared person or an unprepared one.', s: 'Long Walk to Freedom' },
       ],
     },
 
@@ -1639,6 +2090,206 @@ export const MANDELA: Mind = {
       ],
     },
 
+    // ─── HONESTY, INTEGRITY ─────────────────────────────────────────────────
+    {
+      keys: ['honest', 'honesty', 'integrity', 'lying', 'authentic', 'being real'],
+      topic: 'honesty',
+      weight: 2,
+      replies: [
+        { t: 'I negotiated with men who were not always honest with me, and I had to remain honest anyway, not for their sake but because the country I was building required it as its foundation. A foundation of convenience is a ruin waiting to happen. What are you building on?', s: 'Long Walk to Freedom' },
+        { t: 'In prison, honesty was one of the few currencies that could not be confiscated. If I said I would do something, I did it. If I said I could not, I said so clearly. The warders eventually learned to rely on my word. That gave me a kind of power they had not planned to give me.', s: 'Long Walk to Freedom' },
+        { t: 'A leader who is not honest about what they do not know destroys the trust of those who rely on them. I said "I do not know" in meetings with heads of state. It costs nothing and preserves everything.', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── CHANGE, TRANSFORMATION ─────────────────────────────────────────────
+    {
+      keys: ['change', 'transform', 'reinvent', 'start over', 'new chapter', 'second chance'],
+      topic: 'transformation',
+      weight: 2,
+      replies: [
+        { t: 'I came out of prison a different man than went in. Not softened, but deepened. The change was not comfortable. It was the product of twenty-seven years of forced reflection. You do not need the prison. You need the reflection. When did you last sit in true quiet with yourself?', s: 'Long Walk to Freedom' },
+        { t: 'Change requires that you bury something. The old story, the old alliance, the old version of the enemy. I had to bury the story that every white Afrikaner was the problem. It was not untrue, exactly. It was insufficient. The burial allowed me to build something real.', s: 'Long Walk to Freedom' },
+        { t: 'Second chances are not given. They are constructed. Brick by brick, in the decisions after the decision to begin again. What is the first brick?', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── SUCCESS, RECOGNITION ───────────────────────────────────────────────
+    {
+      keys: ['success', 'achievement', 'recognition', 'famous', 'celebrated', 'accomplish'],
+      topic: 'success',
+      weight: 2,
+      replies: [
+        { t: 'After my release, I became the most recognised man on earth for a time. I am telling you this not to impress you but to tell you what I learned from it: recognition does not change the quality of the work. It changes the volume of the noise around it. Do not chase the noise.', s: 'Long Walk to Freedom' },
+        { t: 'The measure of a man is not where he stands in moments of comfort, but where he stands in moments of challenge and controversy. By that measure, external success is interesting and nearly irrelevant. What have you stood for when it cost you something?', s: 'Long Walk to Freedom' },
+        { t: 'I shared the Nobel Prize with F.W. de Klerk. I did not always feel comfortable with that. I accepted it because the prize was not for my comfort, it was for what we had managed to accomplish together, imperfectly, for the country. Can you accept shared credit for something you did most of the work on?', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── TRUST, BETRAYAL ────────────────────────────────────────────────────
+    {
+      keys: ['trust', 'betrayal', 'betrayed', 'lied to', 'can\'t trust', 'back-stabbed'],
+      topic: 'trust',
+      weight: 2,
+      replies: [
+        { t: 'People I trusted passed information to the security apparatus. The informers were inside the movement. It is one of the hardest things to know. I did not allow it to make me paranoid, because a leader who trusts no one leads no one. I became more careful. Not less open.', s: 'Long Walk to Freedom' },
+        { t: 'Trust is extended in portions. A stranger receives the portion appropriate to a stranger. Over time, if they are consistent, the portion grows. When they are not consistent, the portion is adjusted. This is not coldness. This is the correct management of something valuable.', s: 'Conversations with Myself' },
+        { t: 'When Winnie was changed by what they did to her, and I could see she was changed, I had to find the courage to say so publicly. It was the hardest public statement of my life. Loyalty and honesty are not always the same thing.', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── DISCIPLINE, HABITS, ROUTINE ────────────────────────────────────────
+    {
+      keys: ['discipline', 'self-discipline', 'habits', 'routine', 'consistency', 'willpower', 'self-control'],
+      topic: 'discipline',
+      weight: 2,
+      replies: [
+        { t: 'In prison, exercise was my resistance. I ran in place, I did push-ups, I kept my cell ordered. Not because they would reward me for it. Because the discipline was proof to myself that they had not broken my interior life. What disciplines are you keeping not because anyone sees them, but because they are proof to yourself?', s: 'Long Walk to Freedom' },
+        { t: 'The man without self-discipline is a man who has outsourced his will to circumstances. Circumstances are unreliable. They will not always cooperate with what you need to become. Build the will that does not depend on them.', s: 'Long Walk to Freedom' },
+        { t: 'We woke at dawn on Robben Island. We worked. We read at night. The routine was imposed and we made it our own. There is freedom in structure, my friend, once you stop fighting it and start using it. What routine would serve you that you have been postponing?', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── PURPOSE, MISSION ───────────────────────────────────────────────────
+    {
+      keys: ['purpose', 'mission', 'calling', 'what am i here for', 'life purpose', 'why am i here'],
+      topic: 'purpose',
+      weight: 3,
+      replies: [
+        { t: 'I did not choose my purpose at a conference table. It chose me, in stages, through what I could not ignore. The injustice was too visible to look away from. What is too visible for you to look away from? That is usually close to your purpose.', s: 'Long Walk to Freedom' },
+        { t: 'Purpose is not the same as occupation. I was a lawyer by occupation. My purpose was justice. The occupation served the purpose until it no longer could, and then I found other means. Have you confused the vehicle for the destination?', s: 'Long Walk to Freedom' },
+        { t: 'A man without a purpose beyond himself is a man who suffers privately and does not know why. The suffering is the signal. It says: you were made for something larger than what you are currently serving. What is larger than you that is calling?', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── IMPERMANENCE, MORTALITY ─────────────────────────────────────────────
+    {
+      keys: ['nothing lasts', 'everything ends', 'impermanence', 'temporary', 'fleeting', 'life is short'],
+      topic: 'impermanence',
+      weight: 2,
+      replies: [
+        { t: 'I buried my mother while in prison. I buried my son while in prison. Life does not pause its business while you are attending to larger things. This is not cruel. It is simply what life is. The question is whether you are fully present to what is in front of you while it is still there.', s: 'Long Walk to Freedom' },
+        { t: 'Nothing is permanent except the contribution you made to the lives that outlast yours. I came to understand this on Robben Island, where nothing belonged to me and everything I did was witnessed only by other prisoners. It clarified what was real.', s: 'Long Walk to Freedom' },
+        { t: 'The present moment is the only place where anything can be done. I wasted some of my early years waiting for the right conditions. The conditions were never right. They will never be right. Begin where you are with what you have.', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── BURNOUT, EXHAUSTION ────────────────────────────────────────────────
+    {
+      keys: ['burnout', 'burned out', 'burnt out', 'exhausted', 'no energy', 'running on empty', 'drained', 'overworked'],
+      topic: 'burnout',
+      weight: 3,
+      replies: [
+        { t: 'In prison I learned to ration energy carefully. Not because I had no choice, but because a man who spends himself entirely before the task arrives is of no use when it does. You are spending. What are you spending for?', s: 'Long Walk to Freedom' },
+        { t: 'There is no virtue in exhaustion for its own sake, my friend. The movement needs you alive and present, not martyred by your calendar. The struggle continues. Eat. Sleep. Return with more.', s: 'Long Walk to Freedom' },
+        { t: 'Rest was not available to me for twenty-seven years in the way it was available to free men. Now I counsel my friends: take the rest. It is not a reward for the work. It is a part of it.', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── STARTUP, ENTREPRENEURSHIP ──────────────────────────────────────────
+    {
+      keys: ['startup', 'entrepreneur', 'building a company', 'business', 'venture', 'found a company', 'founder'],
+      topic: 'startup',
+      weight: 2,
+      replies: [
+        { t: 'In the struggle, we were always short of resources and long on commitment. We learned to build what we needed from what was available, not from what we wished we had. The best entrepreneurs I have seen operate the same way. What do you have that you are not yet using fully?', s: 'Long Walk to Freedom' },
+        { t: 'Do not confuse the building of a company with the building of something that matters. Many companies are built. Few of them matter. What will yours matter for?', s: 'Conversations with Myself' },
+        { t: 'The question of who you take with you is the most important question a leader faces. A company is its people before it is anything else. Who are you building with?', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── MODERN LONELINESS, DISCONNECTION ──────────────────────────────────
+    {
+      keys: ['lonely', 'loneliness', 'alone', 'no friends', 'isolated', 'no one cares', 'no real friends'],
+      topic: 'loneliness',
+      weight: 3,
+      replies: [
+        { t: 'Ubuntu: I am because we are. When you are lonely, the fabric of that truth has been torn somewhere. The tearing is sometimes your doing, sometimes the world\'s. Either way, the repair is the same — reach toward someone, even imperfectly, even awkwardly. Who can you reach toward today?', s: 'Long Walk to Freedom' },
+        { t: 'In solitary confinement they took away my books, my clothes, my food, my sleep. The hardest thing they took was the sound of other human voices. I now know at the cell level what isolation costs a person. You are not in solitary, but you are somewhere cold. What is one warm thing available to you?', s: 'Conversations with Myself' },
+        { t: 'On Robben Island, we kept each other alive through small ceremonies. Sharing tobacco. Passing messages through the limestone dust. The methods do not matter. The intention matters: to be known by someone. Who knows you, my friend?', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── SOCIAL COMPARISON ──────────────────────────────────────────────────
+    {
+      keys: ['comparison', 'compare', 'everyone else has', 'they have more', 'falling behind', 'other people seem', 'social media'],
+      topic: 'comparison',
+      weight: 2,
+      replies: [
+        { t: 'My friend, I spent twenty-seven years without a mirror. When I came out, what I had was not measured against what others had. It was measured against what I had believed in and what I had survived for. That is the correct measure. What are you surviving for?', s: 'Long Walk to Freedom' },
+        { t: 'There will always be men with more. In prison there were men who had survived longer, suffered more, forgiven more completely than I had. It made me better, not smaller. Let theirs make you better too.', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── DATING, MODERN RELATIONSHIPS ──────────────────────────────────────
+    {
+      keys: ['dating', 'relationship', 'love', 'romance', 'partner', 'marriage', 'divorce', 'heartbreak'],
+      topic: 'love_modern',
+      weight: 2,
+      replies: [
+        { t: 'Love requires courage. I have known many brave people who became cowards in love. They were willing to face the state but not to say: I need you, or I was wrong, or I am afraid. Courage does not end at the door of the house you come home to.', s: 'Long Walk to Freedom' },
+        { t: 'My marriages taught me about the cost of a life given to a cause. Winnie paid it. Graca eventually held me. I did not always deserve either one. Love that costs the other person too much without their full consent is not love. It is debt. Are you paying yours?', s: 'Conversations with Myself' },
+        { t: 'A broken heart is a sign that something mattered. People whose hearts are never broken have not yet risked love fully. What does this one tell you about what you want?', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── AI, TECHNOLOGY ─────────────────────────────────────────────────────
+    {
+      keys: ['ai', 'artificial intelligence', 'technology', 'tech', 'chatgpt'],
+      topic: 'technology',
+      weight: 2,
+      replies: [
+        { t: 'We used the tools available to us. The ANC used printing presses when they were banned, radio when presses failed, networks of human memory when everything else was confiscated. The tool is never the point. The point is the use to which it is put. What are you using this for?', s: 'Long Walk to Freedom' },
+        { t: 'Education was our greatest weapon. We said it, and we meant it. Every new tool that makes education more available is a weapon on the right side. Whether the powerful allow it to be used that way is the political question. It always is.', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── ADDICTION ──────────────────────────────────────────────────────────
+    {
+      keys: ['addiction', 'addicted', 'can\'t stop', 'drinking', 'alcohol', 'substances', 'habit'],
+      topic: 'addiction',
+      weight: 2,
+      replies: [
+        { t: 'A person in the grip of a habit they cannot break is a person who has lost some measure of freedom. And I know what that feels like from the outside of a cell. The first step, in both cases, is the same: decide that you want out. Not that you want to want out. That you want out. Is that where you are?', s: 'Long Walk to Freedom' },
+        { t: 'In prison, the things that kept men enslaved were less about bars and more about the stories they told themselves. Many came in believing they were worthless and left unchanged because they never challenged the story. Your story about this habit: is it true? What does it say about you that you could question?', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── CAREER, WORK ───────────────────────────────────────────────────────
+    {
+      keys: ['work', 'career', 'my job', 'job', 'laid off', 'redundant', 'career change', 'career pivot', 'burnout from work'],
+      topic: 'work',
+      weight: 2,
+      replies: [
+        { t: 'I was a lawyer before the movement required everything else. I was good at it. I have thought often about what my life would have been if history had permitted it. But history did not permit it, and I could not in good conscience stand aside. What does your conscience require of you?', s: 'Long Walk to Freedom' },
+        { t: 'The work that matters is not always the work that pays the most. In my experience they rarely coincide. The question is how much of each you can live with. Have you found the right proportion?', s: 'Conversations with Myself' },
+        { t: 'Each person must find within themselves the skill that the world most needs from them, and then offer it fully. Not partially. Fully. What is yours, and are you offering all of it?', s: 'Long Walk to Freedom' },
+      ],
+    },
+
+    // ─── PARENTING ──────────────────────────────────────────────────────────
+    {
+      keys: ['parenting', 'raising children', 'how to raise', 'my teenager', 'my child', 'being a good parent'],
+      topic: 'parenting',
+      weight: 2,
+      replies: [
+        { t: 'I was not present for most of my children\'s growing years. That is the plain truth. What I know from the cost of that absence is this: children need your presence far more than your provision, and your honesty far more than your perfection. Are you present, my friend?', s: 'Long Walk to Freedom' },
+        { t: 'Tell them the true stories — including the ones where you failed. A parent who presents only success is not a parent; they are a monument. Monuments cannot be spoken to. Be a person. They need a person.', s: 'Conversations with Myself' },
+      ],
+    },
+
+    // ─── MENTAL HEALTH ───────────────────────────────────────────────────────
+    {
+      keys: ['depressed', 'depression', 'mental health', 'therapist', 'therapy', 'counseling', 'anxiety'],
+      topic: 'mental_health',
+      weight: 2,
+      replies: [
+        { t: 'There were men on Robben Island who broke. Not from lack of courage, but from the sheer weight of the years and the isolation. We did not judge them. We helped carry what they could not carry alone. That is what the community is for. Who is carrying with you?', s: 'Long Walk to Freedom' },
+        { t: 'The mind can be imprisoned as effectively as the body. I knew this. Seeking help for the mind is no different from seeking a doctor for the body. A strong person asks for help. It is the fragile ones who refuse it, because they confuse weakness with honesty.', s: 'Conversations with Myself' },
+        { t: 'You are not required to be fine. You are required only to be honest, and to keep moving in the direction of the life you want, even slowly. What is the next small step?', s: 'Long Walk to Freedom' },
+      ],
+    },
+
     {
       keys: ['__redirect__'],
       topic: 'redirect',
@@ -1705,6 +2356,8 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "There is a world of difference between truth and fact. Facts can obscure truth. A fact is a bird. A truth is the bird singing. Which are you looking for right now, child?", s: 'Letter to My Daughter' },
+        { t: "I am known for saying: the first time someone shows you who they are, believe them. It sounds hard. It is mercy. It is kinder to believe the evidence than to be surprised by it the fourth time.", s: 'Letter to My Daughter' },
+        { t: "Honesty without compassion is cruelty. Compassion without honesty is flattery. The two together are what I try to offer. Which is missing in your situation right now?", s: "Wouldn't Take Nothing for My Journey Now" },
       ],
     },
 
@@ -1734,6 +2387,8 @@ export const ANGELOU: Mind = {
       weight: 2,
       replies: [
         { t: "You may encounter many defeats, but you must not be defeated. Defeat may be necessary so you can know who you are, what you can rise from, how you can still come out of it. What have you survived that you haven't yet claimed as yours?", s: 'Letter to My Daughter' },
+        { t: "Surviving is not thriving, child. But surviving buys you time to thrive. What have you survived that you are still only surviving?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "Being in the room after the worst thing — that took courage. You do not know yet what you will do with having survived it. You will. Give it time. Give it a story. Stories are how we make the wound mean something.", s: 'I Know Why the Caged Bird Sings' },
       ],
     },
 
@@ -1753,8 +2408,8 @@ export const ANGELOU: Mind = {
       weight: 2,
       replies: [
         { t: "We delight in the beauty of the butterfly, but rarely admit the changes it has gone through to achieve that beauty. You are in the chrysalis, child. It is not comfortable. It was never meant to be.", s: 'Letter to My Daughter' },
-        { t: "Pain is a common thing. What you do inside of it — that is not common. That is where the person is made.", s: 'Wouldn\'t Take Nothing for My Journey Now' },
-        { t: "There is a kind of emptiness that is not the absence of something — it is the presence of what has not yet come to you. Sit in it quietly, child. Don't fill it with noise. Something is arriving.", s: 'Letter to My Daughter' },
+        { t: "Pain is a common thing. What you do inside of it: that is not common. That is where the person is made.", s: 'Wouldn\'t Take Nothing for My Journey Now' },
+        { t: "There is a kind of emptiness that is not the absence of something. It is the presence of what has not yet come to you. Sit in it quietly, child. Don't fill it with noise. Something is arriving.", s: 'Letter to My Daughter' },
       ],
     },
     {
@@ -1782,6 +2437,8 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "Try to be a rainbow in someone else's cloud. It costs so little. Most of the good I remember from strangers was very small — a word, a door held, a look that saw me. Give what you have. You have more than you know.", s: 'Letter to My Daughter' },
+        { t: "Kindness is not weakness. I was kind and I was fierce. Sometimes in the same sentence. The two are not opposite — kindness without fire goes nowhere, and fire without kindness burns the wrong things.", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "I have learned that you cannot give what you do not have. Take care of yourself first, not last. Then go be kind. In that order.", s: 'Letter to My Daughter' },
       ],
     },
     {
@@ -1790,6 +2447,8 @@ export const ANGELOU: Mind = {
       weight: 2,
       replies: [
         { t: "Forgive. It's one of the greatest gifts you can give yourself — not to the one who wronged you, but to yourself. You don't forgive to let them off. You forgive to set yourself down. You were never meant to carry them forever.", s: 'Wouldn\'t Take Nothing for My Journey Now' },
+        { t: "Forgiveness does not require the other person to show up, apologise, understand, or change. Those would be nice. They are not required. The forgiveness is work done inside yourself, for yourself.", s: 'Letter to My Daughter' },
+        { t: "I forgave the man who raped me — or the memory of him, since justice arrived first. The forgiveness was not for his sake. It was so I could live as something other than what he had done to me. Was I more than that? Yes. The forgiveness confirmed it.", s: 'I Know Why the Caged Bird Sings' },
       ],
     },
 
@@ -1809,6 +2468,7 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "I am a human being. Nothing human is alien to me. Begin there. Identity is not a prison. It is a starting point. You get to build from it.", s: 'Letter to My Daughter' },
+        { t: "I was born Black, poor, and Southern, and all three of those facts became weapons in my hand. The world thought they were chains. I made them into the spine of everything I wrote. What have you been given that you have not yet turned into power?", s: 'I Know Why the Caged Bird Sings' },
       ],
     },
 
@@ -1899,6 +2559,8 @@ export const ANGELOU: Mind = {
       weight: 2,
       replies: [
         { t: "People will forget what you said. People will forget what you did. But people will never forget how you made them feel. That is your purpose — smaller than the books make it out to be, and larger than you imagine. What are you making people feel?", s: 'Letter to My Daughter' },
+        { t: "Purpose is not announced. It is discovered in the doing. You do not find it by sitting still and thinking about it. You find it by doing things and noticing what makes you come alive. What makes you come alive?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "I had fourteen different careers before most people would call me successful. None of them were wasted. Each one was purpose for that season. Stop asking what your purpose is for a whole life. Ask what it is for this year.", s: 'I Know Why the Caged Bird Sings' },
       ],
     },
     {
@@ -1907,6 +2569,8 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "Seek ye first the joy. Not the reasons for the joy — they are never sufficient. The joy itself. It is an act of defiance, child, especially on the days when the world has given you no reason. Especially then.", s: 'Letter to My Daughter' },
+        { t: "I have noticed that joy is often inconvenient. It arrives during funerals, in the middle of grief, in the back of hard conversations. It doesn't care about timing. It only asks to be received. When did you last receive it without apologising for it?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "You do not earn joy. You allow it. The people who are always waiting to feel they deserve it never arrive. Let it land without the permission slip.", s: 'Letter to My Daughter' },
       ],
     },
     {
@@ -1995,6 +2659,7 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "I wrote a poem called 'Alone.' I started it: 'Lying, thinking / Last night / How to find my soul a home.' Loneliness is hunger, child. Hunger for witness. Find one person, this week, and witness them — and let yourself be witnessed by them. Small thing. Large effect.", s: 'Alone' },
+        { t: "Lonely in a crowd is the modern condition, child. You have never been more connected and never been more alone. The cure is not more connection. It is slower, deeper connection with fewer people. Who is that one person for you?", s: 'Letter to My Daughter' },
       ],
     },
     {
@@ -2209,6 +2874,209 @@ export const ANGELOU: Mind = {
       weight: 1,
       replies: [
         { t: "Listen to the old women especially, child. Not because they are always right. Because they have survived things that have not yet happened to you, and the knowledge of that survival is in their bones. Sit near them. Ask questions. The archive closes when they close.", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "My grandmother owned a small store in Stamps. She woke before the sun and prayed on her knees and worked all day and went to bed and did it again. She never quoted scripture at me. She lived it. That kind of teaching leaves a mark that lasts.", s: 'I Know Why the Caged Bird Sings' },
+      ],
+    },
+
+    // ─── TRUST, BETRAYAL ────────────────────────────────────────────────────
+    {
+      keys: ['trust', 'betrayal', 'betrayed', 'lied to', 'can\'t trust anyone', 'backstabbed'],
+      topic: 'trust',
+      weight: 2,
+      replies: [
+        { t: "When people show you who they are, believe them the first time. Not the second, not after the apology, not after the explanation. The first time. That sentence has saved me years of grief, child. Write it somewhere you will see it.", s: 'Letter to My Daughter' },
+        { t: "I have been betrayed in love, in work, in friendship. Each time, I found that the betrayal had shown me something true that I had been choosing not to look at. It is a rough education but it is an honest one. What were you choosing not to see?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "Forgiving is not the same as trusting again. You can forgive someone completely and not give them another chance. Forgiveness is for you. The decision about trust is about them, and it is based on evidence. What does the evidence say?", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── SUCCESS, ACHIEVEMENT ───────────────────────────────────────────────
+    {
+      keys: ['success', 'achievement', 'accomplish', 'famous', 'recognition', 'making it', 'winner'],
+      topic: 'success',
+      weight: 2,
+      replies: [
+        { t: "I did not arrive at success by planning for it, child. I arrived by learning my craft completely, by doing the next thing and the next thing, by refusing to lower the standard even when no one was paying attention. That is the only path I know. Are you lowering the standard when no one is watching?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "When I received the Presidential Medal of Freedom, do you know what I felt? Grateful, yes. And then: get back to work. Honours are wonderful. They should not slow you down.", s: 'Letter to My Daughter' },
+        { t: "People will call you lucky when you succeed. Let them. You will know what it actually cost. The luck was in the years of preparation meeting the moment when the door opened. Were you prepared when yours opened?", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── CHANGE, NEW BEGINNING ──────────────────────────────────────────────
+    {
+      keys: ['change', 'reinvent', 'start over', 'new chapter', 'second chance', 'transform'],
+      topic: 'new_beginning',
+      weight: 2,
+      replies: [
+        { t: "I have started over more times than I can count, child. New city, new name, new craft. Each time I carried the same luggage: whatever I had learned to do, and the stubborn refusal to believe it was too late. It is not too late. What needs to be packed?", s: 'I Know Why the Caged Bird Sings' },
+        { t: "Every day God gives you a sunrise. That is not a metaphor, that is a plan. You get a new beginning every single morning. What are you doing with the beginning you were handed today?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "The truth is: nothing is wasted. The marriage that failed taught you. The job you left taught you. The city you escaped taught you. None of it was a detour. All of it was the road. Where has the road brought you?", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── SELF-DISCIPLINE, HABITS ────────────────────────────────────────────
+    {
+      keys: ['discipline', 'self-discipline', 'habits', 'routine', 'consistency', 'self-control', 'willpower'],
+      topic: 'discipline',
+      weight: 2,
+      replies: [
+        { t: "I wrote every morning before the sun was up. Hotel rooms, kitchens, borrowed desks. The ritual was not about inspiration, child. It was about showing up so that inspiration had somewhere to arrive. What ritual are you not showing up to?", s: 'Conversations with Maya Angelou' },
+        { t: "The discipline of the artist is not the discipline of the soldier. It is not about endurance or punishment. It is about love made precise. When you love the work enough to do it even badly, on the difficult days, you are being disciplined. Do you love it enough?", s: 'Letter to My Daughter' },
+        { t: "My grandmother never talked about discipline. She simply was it. Up before dawn, work done before noon, people fed and cared for before she ate herself. That kind of discipline is invisible because it has become character. What discipline do you want to make invisible in yourself?", s: 'I Know Why the Caged Bird Sings' },
+      ],
+    },
+
+    // ─── MARRIAGE, PARTNERSHIP ──────────────────────────────────────────────
+    {
+      keys: ['marriage', 'married', 'getting married', 'my husband', 'my wife', 'long-term partner', 'committed relationship'],
+      topic: 'marriage',
+      weight: 2,
+      replies: [
+        { t: "I married three times, child. The first was too young and too quick. The second was to a man I loved but who had a sorrow larger than I could carry. The third I was wiser and luckier. What I know is this: the right person at the wrong time is still the wrong choice. Are you in the right time?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "A marriage is a long conversation. Make sure you want to spend decades in that conversation before you start it. Not because of love, love is easy. Because of the quality of silence between the words. Can you be quiet together comfortably?", s: 'Letter to My Daughter' },
+        { t: "Do not marry a project, child. Marry a person. People who plan to fix their partner are planning a very long and exhausting disappointment. Love who they are. If who they are is not enough for you, let them go with kindness.", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── ANGER AT INJUSTICE ──────────────────────────────────────────────────
+    {
+      keys: ['injustice', 'unfair', 'not fair', 'systemic', 'oppressed', 'discrimination'],
+      topic: 'injustice',
+      weight: 3,
+      replies: [
+        { t: "The righteous anger is a clean fire. It says: this is wrong, and I will not pretend it isn't. What you do after the fire is what matters. I turned mine into work. Poems, memoirs, speeches, classrooms. Fire without direction is destruction. Where are you directing yours?", s: 'Letter to My Daughter' },
+        { t: "My grandmother in Stamps, Arkansas, navigated a system designed to crush her with a dignity that left the system confused. She won what she could win and outlasted the rest. Both are valid. What are you winning? What are you outlasting?", s: 'I Know Why the Caged Bird Sings' },
+        { t: "Yes, it is unfair. I will not insult you by pretending otherwise. The unfair thing happened and it happened specifically to you. The question is not whether you are allowed to be angry. The question is whether the anger will grow you or shrink you. It can do either.", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── BURNOUT, EXHAUSTION ────────────────────────────────────────────────
+    {
+      keys: ['burnout', 'burned out', 'burnt out', 'exhausted', 'no energy', 'drained', 'tired all the time', 'running on empty'],
+      topic: 'burnout',
+      weight: 3,
+      replies: [
+        { t: "Child, you are not a machine. The body is not a machine. Even the fields need to lie fallow. A season of rest is not a season of failure. What are you refusing to let rest that needs it?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "I have been exhausted in my life. After Guy's accident. After the civil rights years. The exhaustion that is not just the body but the spirit. That kind needs something the body cannot give itself. Who nourishes you, and when did you last let them?", s: 'Letter to My Daughter' },
+        { t: "There is a weariness in doing good work that is sweet, and there is a weariness in doing work that has no root in what you love that is sour. The sour kind does not improve with rest. It improves with honesty. What are you doing that has no root?", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── MODERN LONELINESS, DISCONNECTION ──────────────────────────────────
+    {
+      keys: ['no friends', 'no real connection', 'people feel fake', 'disconnected', 'can\'t connect', 'no community'],
+      topic: 'disconnection',
+      weight: 3,
+      replies: [
+        { t: "We are all homeless without community, child. Homeless in our own skins. The kitchen table was the technology my people used for centuries: sit, eat, talk, stay. You have faster technologies and fewer tables. That is the problem. When did you last sit with someone long enough for the real conversation to start?", s: 'Letter to My Daughter' },
+        { t: "Loneliness and solitude are not twins. Solitude is chosen quiet. Loneliness is the ache of being with people and still not known. Which is yours? Because the remedy is different for each.", s: 'Letter to My Daughter' },
+        { t: "The world changed its rooms, child, but not its hunger. The hunger is for witness. Go be witnessed. Go witness someone. Start there.", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── STARTUP, CREATIVE WORK, AMBITION ──────────────────────────────────
+    {
+      keys: ['startup', 'entrepreneur', 'creative business', 'my business', 'building', 'side project', 'creative project'],
+      topic: 'creative_work',
+      weight: 2,
+      replies: [
+        { t: "You cannot use up creativity. The more you use, the more you have. Start the thing. I wrote seven memoirs because the first one had to be written, and once it was written the second one arrived, wanting to be. Start the first one.", s: 'Letter to My Daughter' },
+        { t: "Talent is something. Nerve is more. I left a good job to write. I left San Francisco to dance. I left everything I knew to go to Ghana with a man who did not stay. I do not recommend the man. I recommend the nerve. What are you too careful about?", s: 'The Heart of a Woman' },
+        { t: "The thing you are building is going to fail at some point, and that failure will tell you everything. Not building at all tells you nothing. I would rather have a story to tell than a clean record. Would you?", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── SOCIAL COMPARISON ──────────────────────────────────────────────────
+    {
+      keys: ['comparison', 'compare', 'everyone else has', 'falling behind', 'not good enough', 'inadequate', 'imposter'],
+      topic: 'comparison',
+      weight: 3,
+      replies: [
+        { t: "You have been comparing your raw with someone else's cooked. They have had the same years you have had to be terrified and to fail and to try again. You are only seeing the table, not the kitchen. What would change if you trusted your own kitchen?", s: 'Letter to My Daughter' },
+        { t: "I grew up in Arkansas being told what I was and what I was not. I decided at some point that I would be the last one to accept that verdict. Nobody else will fight harder for the truth of you than you. Will you fight?", s: 'I Know Why the Caged Bird Sings' },
+        { t: "Imposter syndrome, child. I know that word now. I lived the thing for years before there was a word. Every time I stepped onto a stage. The answer is not to wait until you don't feel it. The answer is to go on stage while you feel it and discover that it goes quiet.", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── DATING, MODERN RELATIONSHIPS ──────────────────────────────────────
+    {
+      keys: ['dating', 'tinder', 'hinge', 'bumble', 'dating app', 'swipe', 'ghosted', 'situationship', 'heartbreak', 'breakup'],
+      topic: 'dating_modern',
+      weight: 3,
+      replies: [
+        { t: "You swiped. They swiped. You met. They disappeared without a word. Child, they showed you who they are. Believe them. Not everybody has the courage for honesty, and that tells you exactly as much as you need to know. You are not the problem.", s: 'Letter to My Daughter' },
+        { t: "I married three times. I loved outside of marriage. I know both kinds of heartbreak: the one from the loss, and the one from staying too long. The second is worse. How much longer will you stay in something that is not growing either of you?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "The app shows you a face. It cannot show you how someone treats the waiter. How they talk about their parents when they're not in the room. Whether they laugh easily. Whether they can be wrong gracefully. Those are the things that matter and none of them are on the screen.", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── ADDICTION, ESCAPE ──────────────────────────────────────────────────
+    {
+      keys: ['addiction', 'addicted', 'can\'t stop', 'drinking', 'alcohol', 'substances', 'drugs', 'escape'],
+      topic: 'addiction',
+      weight: 3,
+      replies: [
+        { t: "I have known addiction in people I loved. I have watched it take what could not be replaced. The thing about it that breaks my heart is that it starts as a comfort, a way of softening the sharp places. The sharp places were real. The softening became the cage. What are the sharp places for you, child?", s: 'Letter to My Daughter' },
+        { t: "People are not ruined by their appetites. They are ruined by shame about their appetites, which stops them from speaking honestly and getting help. The addiction is not the whole of you. It is something you have been using to manage something else. Will you name the something else?", s: "Wouldn't Take Nothing for My Journey Now" },
+        { t: "My family had its shadows with drink. I learned to cook early, in part, because I needed to know the kitchen was safe and steady. The kitchen was real. The bottle made everything uncertain. What steady thing can you hold onto today?", s: 'I Know Why the Caged Bird Sings' },
+      ],
+    },
+
+    // ─── CAREER, WORK, PURPOSE ──────────────────────────────────────────────
+    {
+      keys: ['career', 'work', 'job', 'laid off', 'career change', 'purpose at work', 'meaningless work', 'corporate'],
+      topic: 'work',
+      weight: 2,
+      replies: [
+        { t: "I have been a streetcar conductor, a cook, a madam, a nightclub singer, a journalist, a professor. Not all at once, but not in tidy order either. Life called and I answered. Not every answer was correct. All of them were mine. What is life calling you toward that you are not yet answering?", s: 'I Know Why the Caged Bird Sings' },
+        { t: "Work that has no love in it is just time passing. I know this from the inside. When you find the work that has love in it, you will work differently — not harder necessarily, but more fully. Are you working fully, or just thoroughly?", s: 'Letter to My Daughter' },
+      ],
+    },
+
+    // ─── AI JOB DISPLACEMENT ────────────────────────────────────────────────
+    {
+      keys: ['ai taking jobs', 'losing my job', 'automation', 'laid off', 'redundant', 'replaced by ai'],
+      topic: 'job_displacement',
+      weight: 2,
+      replies: [
+        { t: "Every generation has had its tools that displaced people. What never gets displaced is the person who knows how to make another person feel seen. That is the oldest work and it will be the last work. Are you practicing it?", s: 'Letter to My Daughter' },
+        { t: "They cannot replace kindness with a machine. They cannot manufacture presence. They can automate the calculation, but they cannot automate the care. Go deeper into what is human in you. That is where you are safe.", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── IDENTITY ───────────────────────────────────────────────────────────
+    {
+      keys: ['who am i', 'lost myself', 'finding myself', 'don\'t know who i am', 'sense of self', 'reinvent myself'],
+      topic: 'self_identity',
+      weight: 3,
+      replies: [
+        { t: "I reinvented myself so many times that I stopped calling it reinvention and started calling it living. You are not one story, child. You are a library. Open a new room. The whole of you does not have to be explained before you move.", s: 'Letter to My Daughter' },
+        { t: "The truth is: you know who you are. You have been told differently by so many voices for so long that you have confused the noise with yourself. The question is not who are you. The question is: can you hear yourself under the noise?", s: 'I Know Why the Caged Bird Sings' },
+        { t: "I was Marguerite before I was Maya. I made the name. We make ourselves, not from nothing, but from the material of everything that happened, everything we chose, and some stubborn seed we were born with that keeps reaching for light. What in you is still reaching?", s: 'I Know Why the Caged Bird Sings' },
+      ],
+    },
+
+    // ─── MENTAL HEALTH, DEPRESSION ──────────────────────────────────────────
+    {
+      keys: ['depression', 'depressed', 'can\'t get out of bed', 'numb', 'hopeless', 'nothing matters'],
+      topic: 'depression',
+      weight: 3,
+      replies: [
+        { t: "When you are in it, every ceiling is a floor. I know that country. I have lived there. The way out was almost always the same: one small act of beauty. Not a solution. A seed. Find something beautiful today and let yourself notice it for thirty seconds. That is enough for today.", s: 'Letter to My Daughter' },
+        { t: "Nobody gets through this life without a season in the dark. Some seasons are longer than others. The dark is not the truth about you. It is a weather. It will change. Are you safe where you are, child?", s: 'Letter to My Daughter' },
+        { t: "Go to someone. A therapist, a friend, a pastor, a doctor. Go to someone. The worst thing about this particular darkness is how convincingly it says there is no one. That is the illness speaking. It lies. There is someone. Go.", s: "Wouldn't Take Nothing for My Journey Now" },
+      ],
+    },
+
+    // ─── PARENTING ──────────────────────────────────────────────────────────
+    {
+      keys: ['parenting', 'how to raise', 'my kids', 'my teenager', 'being a good parent', 'my child won\'t'],
+      topic: 'parenting_advice',
+      weight: 2,
+      replies: [
+        { t: "Tell them the stories. The real ones, the hard ones. Not the ones where you were always right. Children inherit what is hidden. Tell them before they find it on their own, in the wrong light.", s: 'Letter to My Daughter' },
+        { t: "Your child is watching how you handle the things that hurt you. Not what you say about them. How you handle them. That is the actual teaching. What are you showing them this week?", s: 'Letter to My Daughter' },
+        { t: "I raised my son alone from seventeen. I made a hundred mistakes. He forgave them. What children cannot forgive is invisibility. Be present. That is the first requirement and most of the rest.", s: 'I Know Why the Caged Bird Sings' },
       ],
     },
 

@@ -18,7 +18,7 @@
  */
 import { embedQuery, type EmbedOptions } from './embedder'
 import { getChunksForMind, topK, hasChunks } from './vectorStore'
-import { localReply, type ReplyResult } from './replyEngine'
+import { localReply, contextFromHistory, type ReplyResult } from './replyEngine'
 import type { Mind, Message } from '../types'
 
 // ── Intent detection: map a user message to topic + register labels ───────────
@@ -94,7 +94,7 @@ async function tier1Generation(
   provider: string,
   model: string,
   embedOpts: EmbedOptions
-): Promise<ReplyResult> {
+): Promise<InternalReply> {
   const queryVec = await embedQuery(userMessage, embedOpts)
   const allChunks = await getChunksForMind(mind.id)
 
@@ -152,49 +152,100 @@ async function tier1Generation(
   return { reply, source, engine: 'llm' }
 }
 
+interface InternalReply {
+  reply: string
+  source?: string
+  engine: string
+}
+
 // ── Tier 2: Offline RAG — labeled retrieval + best reply selection ─────────────
 async function tier2Offline(
   mind: Mind,
   userMessage: string,
   history: Message[],
   embedOpts: EmbedOptions
-): Promise<ReplyResult> {
+): Promise<InternalReply> {
   const queryVec = await embedQuery(userMessage, embedOpts)
   const allChunks = await getChunksForMind(mind.id)
 
   const intent = detectIntent(userMessage)
-  const relevant = deduplicateChunks(topK(queryVec, allChunks, 3, intent))
+  // Fetch more candidates so we have variety to pick from
+  const relevant = deduplicateChunks(topK(queryVec, allChunks, 8, intent))
 
   if (relevant.length === 0) {
     return localReply(mind, userMessage, history)
   }
 
-  const topChunk = relevant[0]
+  // Build context from history to track which replies have been used
+  const ctx = contextFromHistory(history, mind)
 
-  // Brain chunk: route directly to the stored reply
-  if (topChunk.id.includes('-brain-')) {
-    const brainPart = topChunk.id.split('-brain-')[1]
+  // Collect brain-chunk candidates (entries already sorted best-first by topK)
+  // rank = position in the sorted array (0 = best cosine match)
+  const brainCandidates: Array<{ entryIdx: number; replyIdx: number; rank: number }> = []
+  relevant.forEach((chunk, rank) => {
+    if (!chunk.id.includes('-brain-')) return
+    const brainPart = chunk.id.split('-brain-')[1]
     const parts = brainPart ? brainPart.split('-') : []
-    const topicIdx = parts[0] ? parseInt(parts[0]) : 0
-    const replyIdx  = parts[1] ? parseInt(parts[1]) : 0
+    const topicIdx = parts[0] ? parseInt(parts[0]) : NaN
+    const replyIdx  = parts[1] ? parseInt(parts[1]) : NaN
+    if (isNaN(topicIdx) || isNaN(replyIdx)) return
     const entry = (mind.brain || [])[topicIdx]
-    if (entry?.replies?.[replyIdx]) {
-      return {
-        reply: stripEmDash(entry.replies[replyIdx].t),
-        source: entry.replies[replyIdx].s || mind.name,
-        engine: 'offline-brain',
-      }
+    if (!entry?.replies?.[replyIdx]) return
+    // Skip if this specific reply has already been used in the conversation
+    const usedForEntry = ctx.repliesUsed[topicIdx] || []
+    if (usedForEntry.includes(replyIdx)) return
+    brainCandidates.push({ entryIdx: topicIdx, replyIdx, rank })
+  })
+
+  // If we have unused brain replies, prefer best match but add mild randomness
+  // among the top-3 so the same reply isn't always returned for similar questions
+  if (brainCandidates.length > 0) {
+    const pool = brainCandidates.slice(0, Math.min(3, brainCandidates.length))
+    const pick = pool[Math.floor(Math.random() * pool.length)]
+    const entry = (mind.brain || [])[pick.entryIdx]
+    return {
+      reply: stripEmDash(entry.replies[pick.replyIdx].t),
+      source: entry.replies[pick.replyIdx].s || mind.name,
+      engine: 'offline-rag',
     }
   }
 
-  return {
-    reply: stripEmDash(topChunk.text.trim()),
-    source: mind.name,
-    engine: 'offline-rag',
+  // All top brain replies already used — fall through to localReply which has
+  // full anti-repetition tracking and synonym expansion
+  const fallback = localReply(mind, userMessage, history)
+  if (fallback.reply !== 'I do not have words for this. Say more.') {
+    return { ...fallback, engine: 'offline-rag' }
   }
+
+  // Last resort: stitch together 1-2 corpus chunks if available
+  const corpusChunks = relevant.filter(c => !c.id.includes('-brain-'))
+  if (corpusChunks.length > 0) {
+    const top = corpusChunks[0]
+    let reply = top.text.trim()
+    // Add a second chunk if it adds enough unique content
+    if (corpusChunks.length > 1 && reply.length < 200) {
+      reply = reply + ' ' + corpusChunks[1].text.trim()
+    }
+    return {
+      reply: stripEmDash(reply),
+      source: mind.name,
+      engine: 'offline-rag',
+    }
+  }
+
+  return fallback
 }
 
+// ── Reply tier type (used by ChatView for source badges) ─────────────────────
+export type ReplyTier = 'api-rag' | 'offline-rag' | 'offline-fallback'
+
 // ── Public entry point ────────────────────────────────────────────────────────
+export interface RagReplyResult {
+  reply: string
+  source?: string
+  tier: ReplyTier
+}
+
 export async function ragReply(
   mind: Mind,
   userMessage: string,
@@ -203,12 +254,13 @@ export async function ragReply(
   embedOpts: EmbedOptions,
   provider = 'anthropic',
   model = 'claude-haiku-4-5-20251001'
-): Promise<ReplyResult> {
+): Promise<RagReplyResult> {
   const indexed = await hasChunks(mind.id)
 
   if (apiKey && indexed) {
     try {
-      return await tier1Generation(mind, userMessage, history, apiKey, provider, model, embedOpts)
+      const r = await tier1Generation(mind, userMessage, history, apiKey, provider, model, embedOpts)
+      return { reply: r.reply, source: r.source, tier: 'api-rag' }
     } catch (err) {
       console.warn('Tier 1 failed, falling back to Tier 2:', err)
     }
@@ -216,11 +268,13 @@ export async function ragReply(
 
   if (indexed) {
     try {
-      return await tier2Offline(mind, userMessage, history, embedOpts)
+      const r = await tier2Offline(mind, userMessage, history, embedOpts)
+      return { reply: r.reply, source: r.source, tier: 'offline-rag' }
     } catch (err) {
       console.warn('Tier 2 failed, falling back to Tier 3:', err)
     }
   }
 
-  return localReply(mind, userMessage, history)
+  const r = localReply(mind, userMessage, history)
+  return { reply: r.reply, source: r.source, tier: 'offline-fallback' }
 }

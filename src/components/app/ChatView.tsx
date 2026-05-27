@@ -60,7 +60,7 @@ export default function ChatView() {
     track('message_sent', { mindId: currentMindId, userEmail: useAppStore.getState().user?.email || undefined })
 
     try {
-      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || undefined, {}, provider, model)
+      const result = await ragReply(mind, text.trim(), historyWithCurrent, apiKey || null, {}, provider, model)
       setTyping(false)
       addMessage(currentMindId, {
         role: 'assistant',
