@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useAppStore } from '@/store/appStore'
-import { supabase } from '@/lib/supabaseClient'
+import { usePrivy } from '@privy-io/react-auth'
 
 const AuthPage = dynamic(() => import('@/components/app/AuthPage'), { ssr: false })
 const EarlyAccessModal = dynamic(() => import('@/components/modals/EarlyAccessModal'), { ssr: false })
@@ -11,35 +11,22 @@ const Toast = dynamic(() => import('@/components/ui/Toast'), { ssr: false })
 
 export default function LoginRoute() {
   const router = useRouter()
-  const { login, logout, setPage } = useAppStore()
+  const { login, setPage } = useAppStore()
+  const { ready, authenticated, user } = usePrivy()
 
   useEffect(() => {
     setPage('auth')
+  }, [setPage])
 
-    // If already logged in, go straight to app
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const name = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
-        const email = session.user.email || ''
-        login(name, email)
-        router.replace('/app')
-      }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const name = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
-        const email = session.user.email || ''
-        login(name, email)
-        router.replace('/app')
-      }
-      if (event === 'SIGNED_OUT') {
-        logout()
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [login, logout, router, setPage])
+  useEffect(() => {
+    if (!ready) return
+    if (authenticated && user) {
+      const email = user.email?.address || ''
+      const name = email.split('@')[0] || 'User'
+      login(name, email)
+      router.replace('/app')
+    }
+  }, [ready, authenticated, user, login, router])
 
   return (
     <>

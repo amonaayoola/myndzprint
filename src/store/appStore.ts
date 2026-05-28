@@ -138,10 +138,6 @@ export const useAppStore = create<Store>()(
           .catch(() => { /* non-fatal */ })
       },
       logout: () => {
-        // Sign out from Supabase Auth (non-blocking)
-        import('../lib/supabaseClient').then(({ authSignOut }) => {
-          authSignOut().catch(console.warn)
-        })
         const convReset: Record<string, Message[]> = {}
         for (const m of MINDS_WITH_CORPUS) convReset[m.id] = []
         set({

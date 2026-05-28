@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAppStore } from '@/store/appStore'
+import { useLogout } from '@privy-io/react-auth'
 import type { Mind } from '@/types'
 
 const NAV_ITEMS = [
@@ -53,6 +54,7 @@ function matchesSearch(mind: Mind, q: string): boolean {
 export default function Sidebar() {
   const router = useRouter()
   const { appView, setAppView, user, logout, minds, currentMindId, selectMind, setBuildModalOpen } = useAppStore()
+  const { logout: privyLogout } = useLogout()
   const [search, setSearch] = useState('')
 
   const publicMinds = minds.filter(m => m.type === 'public' && !m.ownerEmail)
@@ -155,7 +157,7 @@ export default function Sidebar() {
           <div className="sb-user-name">{user?.name ?? 'Guest'}</div>
           <div className="sb-user-email">{user?.email ?? ''}</div>
         </div>
-        <button className="sb-logout" onClick={() => { logout(); router.push('/') }} title="Sign out">
+        <button className="sb-logout" onClick={() => { void privyLogout(); logout(); router.push('/') }} title="Sign out">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
