@@ -14,12 +14,19 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
 
   // Supabase sends the user back with a session in the URL hash.
-  // detectSessionInUrl: true in the client handles this automatically —
-  // we just wait for the session to be established.
+  // detectSessionInUrl: true processes the hash on load — the PASSWORD_RECOVERY
+  // event can fire before useEffect runs, so we also check the current session.
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
+    // Check if a recovery session is already active (event may have fired early)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   async function submit() {
