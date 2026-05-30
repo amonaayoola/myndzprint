@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/appStore'
 
 export default function Navbar() {
   const router = useRouter()
-  const { setAuthMode, setEarlyAccessOpen } = useAppStore()
+  const { setAuthMode } = useAppStore()
 
   return (
     <div className="navbar-wrap">
@@ -26,7 +26,7 @@ export default function Navbar() {
 
         <div className="nav-actions">
           <button className="btn-ghost" onClick={() => { setAuthMode('login'); router.push('/login') }}>Sign in</button>
-          <button className="btn-primary" onClick={() => setEarlyAccessOpen(true)}>Get early access</button>
+          <span className="btn-primary" style={{ cursor: 'default', opacity: 0.6, pointerEvents: 'none' }}>Get early access</span>
         </div>
       </nav>
     </div>
