@@ -21,7 +21,7 @@ export default function Navbar() {
           <a href="#how">How it works</a>
           <a href="#minds">Minds</a>
           <a href="#b2b">For Business</a>
-          <a href="/whitepaper.html">Whitepaper</a>
+          <a href="/whitepaper">Whitepaper</a>
         </div>
 
         <div className="nav-actions">
